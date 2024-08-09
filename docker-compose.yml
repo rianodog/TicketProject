@@ -1,0 +1,79 @@
+# version: '3.4'
+
+services:
+  ticketproject:
+    image: ${DOCKER_REGISTRY-}ticketproject
+    build:
+      context: .
+      dockerfile: TicketProject/Dockerfile
+    ports:
+      - "8080:8080"
+
+  ticketproject1:
+    image: ${DOCKER_REGISTRY-}ticketproject
+    build:
+      context: .
+      dockerfile: TicketProject/Dockerfile
+    ports:
+      - "8081:8080"
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8070:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ticketproject
+      - ticketproject1
+      - vue
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  mssql:
+    container_name: mssql
+    image: mcr.microsoft.com/mssql/server:latest
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD}
+      ACCEPT_EULA: ${ACCEPT_EULA}
+    ports:
+      - "${DB_PORT}:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+  vue:
+    container_name: vue
+    build:
+      context: ./TicketProject/FrontEnd
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./TicketProject/FrontEnd:/app:rw
+    command: >
+      sh -c "
+      if [ ! -f 'package.json' ]; then
+        npx create-vite@latest my-vue-app --template vue;
+        mv my-vue-app/* .;
+        rm -rf my-vue-app;
+        npm install;
+      elif [ ! -d 'node_modules' ]; then
+        npm install;
+      fi;
+      npm run dev
+      "
+
+volumes:
+  mssql-data:
