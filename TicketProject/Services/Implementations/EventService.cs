@@ -8,9 +8,9 @@ namespace TicketProject.Services.Implementations
 {
     public class EventService : IEventService
     {
-        private readonly IEventDAO _eventDAO;
+        private readonly IEventDao _eventDAO;
 
-        public EventService(IEventDAO eventDAO)
+        public EventService(IEventDao eventDAO)
         {
             _eventDAO = eventDAO;
         }

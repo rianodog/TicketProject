@@ -1,13 +1,14 @@
 ﻿using System.Linq.Expressions;
 using TicketProject.Extensions;
 using TicketProject.Models.Entity;
+using TicketProject.DAL.Interfaces;
 
 namespace TicketProject.DAL.Implementions
 {
-    public class EventDAO
+    public class EventDao : IEventDao
     {
         private readonly TicketDbContext _dbContext;
-        public EventDAO(TicketDbContext ticketDbContext)
+        public EventDao(TicketDbContext ticketDbContext)
         {
             _dbContext = ticketDbContext;
         }

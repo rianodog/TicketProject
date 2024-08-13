@@ -3,7 +3,7 @@ using TicketProject.Models.Entity;
 
 namespace TicketProject.DAL.Interfaces
 {
-    public interface IUserDAO
+    public interface IUserDao
     {
         User GetUserById(int id);
 

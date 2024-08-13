@@ -7,9 +7,9 @@ namespace TicketProject.Services.Implementations
 {
     public class UserService : IUserService
     {
-        private readonly IUserDAO _userDao;
+        private readonly IUserDao _userDao;
 
-        public UserService(IUserDAO userDao)
+        public UserService(IUserDao userDao)
         {
             _userDao = userDao;
         }
