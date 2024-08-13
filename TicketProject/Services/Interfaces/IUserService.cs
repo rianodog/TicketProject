@@ -1,4 +1,5 @@
-﻿using TicketProject.Models.Entity;
+﻿using TicketProject.Models.DTO;
+using TicketProject.Models.Entity;
 
 namespace TicketProject.Services.Interfaces
 {
@@ -10,7 +11,7 @@ namespace TicketProject.Services.Interfaces
 
         void RegisterUser(User user);
 
-        User LoginUser(string email, string password);
+        User? LoginUser(LoginUserDto loginUserDto);
 
         void UpdateUser(User user);
 
