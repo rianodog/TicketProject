@@ -4,7 +4,7 @@ using TicketProject.Models.Entity;
 using TicketProject.DAL.Interfaces;
 using System.Linq.Expressions;
 
-namespace TicketProject.Services.Implementations
+namespace TicketProject.Services.Implement
 {
     public class EventService : IEventService
     {

@@ -1,5 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NLog.Extensions.Logging;
+using TicketProject.DAL.Interfaces;
+using TicketProject.DAL.Implement;
+using TicketProject.Services.Implement;
+using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Extensions
 {
@@ -21,6 +25,8 @@ namespace TicketProject.Extensions
                 options.AddNLog(configuration);
             });
 
+            services.AddTransient<IUserService, UserService>();
+            services.AddTransient<IUserDao, UserDao>();
         }
     }
 }

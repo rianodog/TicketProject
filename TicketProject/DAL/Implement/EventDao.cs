@@ -3,7 +3,7 @@ using TicketProject.Extensions;
 using TicketProject.Models.Entity;
 using TicketProject.DAL.Interfaces;
 
-namespace TicketProject.DAL.Implementions
+namespace TicketProject.DAL.Implement
 {
     public class EventDao : IEventDao
     {
@@ -30,11 +30,11 @@ namespace TicketProject.DAL.Implementions
             _dbContext.SaveChanges();
         }
 
-        public void DeleteEvent(int id)
+        public bool DeleteEvent(int id)
         {
             var e = _dbContext.Events.Find(id);
-            _dbContext.Events.Remove(e);
-            _dbContext.SaveChanges();
+            _dbContext.Events.Remove(e!);
+            return _dbContext.SaveChanges() > 0;
         }
 
         public IEnumerable<Event> GetEvents(Expression<Func<Event, bool>> filter)

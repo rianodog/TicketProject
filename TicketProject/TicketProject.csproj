@@ -26,9 +26,6 @@
 
   <ItemGroup>
     <Folder Include="FrontEnd\" />
-    <Folder Include="Models\DTO\" />
-    <Folder Include="Models\Validations\" />
-    <Folder Include="Services\Implementations\" />
   </ItemGroup>
 
 </Project>

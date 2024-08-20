@@ -22,6 +22,8 @@ public partial class TicketDbContext : DbContext
 
     public virtual DbSet<OrderItem> OrderItems { get; set; }
 
+    public virtual DbSet<SystemLog> SystemLogs { get; set; }
+
     public virtual DbSet<Ticket> Tickets { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -99,6 +101,20 @@ public partial class TicketDbContext : DbContext
                 .HasForeignKey(d => d.TicketId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__OrderItem__Ticke__5070F446");
+        });
+
+        modelBuilder.Entity<SystemLog>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__SystemLo__3213E83F140DA3B1");
+
+            entity.ToTable("SystemLog");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FunctionName).HasMaxLength(500);
+            entity.Property(e => e.Level)
+                .HasMaxLength(30)
+                .IsUnicode(false);
+            entity.Property(e => e.Message).HasMaxLength(3000);
         });
 
         modelBuilder.Entity<Ticket>(entity =>

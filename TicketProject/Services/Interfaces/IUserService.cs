@@ -1,22 +1,26 @@
-﻿using TicketProject.Models.DTO;
+﻿using System.Linq.Expressions;
+using TicketProject.Models.Dto;
 using TicketProject.Models.Entity;
 
 namespace TicketProject.Services.Interfaces
 {
     public interface IUserService
     {
-        User GetUserById(int id);
+        User? GetUserByPhoneNumber(string phoneNumber);
 
-        User GetUserByEmail(string email);
+        User? GetUserByEmail(string email);
 
-        void RegisterUser(User user);
+        Task<User?> GetUserByLogin(LoginUserDto loginUserDto);
 
-        User? LoginUser(LoginUserDto loginUserDto);
+        Task<IEnumerable<User>> GeUsersByFilter(Expression<Func<User, bool>> filter);
 
-        void UpdateUser(User user);
+        Task<IEnumerable<User>> GetAllUsers();
 
-        void DeleteUser(int id);
+        Task<User> RegisterUser(User user);
 
-        IEnumerable<User> GetAllUsers();
+        Task<User> UpdateUser(User user);
+
+        Task DeleteUser(int id);
+
     }
 }

@@ -3,11 +3,11 @@ using TicketProject.Models.Entity;
 
 namespace TicketProject.Services.Interfaces
 {
-    public interface IJWTService
+    public interface IJwtService
     {
         public ClaimsIdentity GenerateClaims(User user);
         public string[] GenerateJwtToken(User user);
-        public ClaimsPrincipal? VerifyToken(string token);
+        public ClaimsPrincipal VerifyToken(string token);
         public string[]? RefreshJwtToken(string token);
     }
 }
