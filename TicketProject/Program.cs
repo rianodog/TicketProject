@@ -7,7 +7,7 @@ namespace TicketProject
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            Extensions.ServiceCollectionExtensions.AddTicketServices(builder.Services, builder.Configuration);
+            Helpers.ServiceCollectionExtensions.AddTicketServices(builder.Services, builder.Configuration);
 
             var app = builder.Build();
 

@@ -1,7 +1,15 @@
 ﻿namespace TicketProject.Services.Interfaces
 {
-    public interface IErrorHandler
+    /// <summary>
+    /// 定義錯誤處理介面。
+    /// </summary>
+    /// <typeparam name="T">處理錯誤的類型。</typeparam>
+    public interface IErrorHandler<T>
     {
-        void HandleError(Exception e, ILogger logger, string source);
+        /// <summary>
+        /// 處理錯誤的方法。
+        /// </summary>
+        /// <param name="e">要處理的例外狀況。</param>
+        void HandleError(Exception e);
     }
 }

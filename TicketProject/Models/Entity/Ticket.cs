@@ -9,11 +9,11 @@ public partial class Ticket
 
     public int EventId { get; set; }
 
-    public string TicketType { get; set; } = null!;
+    public string? TicketType { get; set; }
 
-    public decimal Price { get; set; }
+    public decimal? Price { get; set; }
 
-    public int QuantityAvailable { get; set; }
+    public int? QuantityAvailable { get; set; }
 
     public int? QuantitySold { get; set; }
 

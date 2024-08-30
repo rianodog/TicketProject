@@ -12,4 +12,6 @@ public partial class SystemLog
     public string? FunctionName { get; set; }
 
     public string? Message { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
 }

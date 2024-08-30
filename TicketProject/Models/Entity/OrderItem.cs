@@ -11,11 +11,9 @@ public partial class OrderItem
 
     public int TicketId { get; set; }
 
-    public int Quantity { get; set; }
+    public int? Quantity { get; set; }
 
-    public decimal UnitPrice { get; set; }
-
-    public decimal TotalPrice { get; set; }
+    public decimal? UnitPrice { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

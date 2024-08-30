@@ -1,4 +1,4 @@
-# version: '3.4'
+#version: '3.4'
 
 services:
   ticketproject:
@@ -8,6 +8,8 @@ services:
       dockerfile: TicketProject/Dockerfile
     ports:
       - "8080:8080"
+    networks:
+      - my_custom_network
 
   ticketproject1:
     image: ${DOCKER_REGISTRY-}ticketproject
@@ -16,6 +18,8 @@ services:
       dockerfile: TicketProject/Dockerfile
     ports:
       - "8081:8080"
+    networks:
+      - my_custom_network
 
   nginx:
     image: nginx:latest
@@ -28,12 +32,16 @@ services:
       - ticketproject
       - ticketproject1
       - vue
+    networks:
+      - my_custom_network
 
   redis:
     container_name: redis
     image: redis:latest
     ports:
       - "6379:6379"
+    networks:
+      - my_custom_network
 
   rabbitmq:
     container_name: rabbitmq
@@ -41,17 +49,38 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - my_custom_network
 
-  mssql:
-    container_name: mssql
+  mssql-master:
+    container_name: mssql-master
     image: mcr.microsoft.com/mssql/server:latest
     environment:
       SA_PASSWORD: ${SA_PASSWORD}
       ACCEPT_EULA: ${ACCEPT_EULA}
+      MSSQL_AGENT_ENABLED: "true"
     ports:
-      - "${DB_PORT}:1433"
+      - "${MASTER_DB_PORT}:1433"
     volumes:
       - mssql-data:/var/opt/mssql
+    networks:
+      my_custom_network:
+        ipv4_address: 172.16.0.224
+
+  mssql-slave:
+    container_name: mssql-slave
+    image: mcr.microsoft.com/mssql/server:latest
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD}
+      ACCEPT_EULA: ${ACCEPT_EULA}
+      MSSQL_AGENT_ENABLED: "true"
+    ports:
+      - "${SLAVE_DB_PORT}:1433"
+    volumes:
+      - mssql_slave_data:/var/opt/mssql
+    networks:
+      my_custom_network:
+        ipv4_address: 172.16.0.225
 
   vue:
     container_name: vue
@@ -74,6 +103,16 @@ services:
       fi;
       npm run dev
       "
+    networks:
+      - my_custom_network
 
 volumes:
   mssql-data:
+  mssql_slave_data:
+
+networks:
+  my_custom_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/16

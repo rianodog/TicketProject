@@ -3,46 +3,27 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using TicketProject.Models.Entity;
 using TicketProject.Services.Interfaces;
-using TicketProject.Extensions;
+using TicketProject.Models;
 
 namespace TicketProject.Services.Implement
 {
-    public class JWTService : IJwtService
+    /// <summary>
+    /// JWT 服務實現類別。
+    /// </summary>
+    public class JWTService : IJWTService
     {
         private readonly string _secretKey;
-        private readonly ILogger<JWTService> _logger;
-        private readonly IErrorHandler _errorHandler;
-
-        public JWTService(IConfiguration configuration, ILogger<JWTService> logger, IErrorHandler errorHandler)
-        {
-            _secretKey = configuration["Jwt:SecretKey"]!;
-            _logger = logger;
-            _errorHandler = errorHandler;
-        }
+        private readonly IErrorHandler<JWTService> _errorHandler;
 
         /// <summary>
-        /// 為指定的使用者生成聲明。
+        /// 初始化 JWTService 類別的新執行個體。
         /// </summary>
-        /// <param name="user">使用者。</param>
-        /// <returns>聲明身份。</returns>
-        public ClaimsIdentity GenerateClaims(User user)
+        /// <param name="configuration">配置。</param>
+        /// <param name="errorHandler">錯誤處理器。</param>
+        public JWTService(IConfiguration configuration, IErrorHandler<JWTService> errorHandler)
         {
-            try
-            {
-                return new ClaimsIdentity(
-                [
-                        new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                                new Claim(ClaimTypes.Name, user.Username!),
-                                new Claim(ClaimTypes.Email, user.Email!),
-                                new Claim(ClaimTypes.Role, ((Enums.UserRoles)user.IsAdmin!).ToString())
-                ], "Bearer"
-                );
-            }
-            catch (Exception e)
-            {
-                _errorHandler.HandleError(e, _logger, typeof(JWTService).FullName!);
-                throw;
-            }
+            _secretKey = configuration["Jwt:SecretKey"]!;
+            _errorHandler = errorHandler;
         }
 
         /// <summary>
@@ -68,11 +49,11 @@ namespace TicketProject.Services.Implement
                 var shortToken = tokenHandler.CreateToken(tokenDescriptor);
                 tokenDescriptor.Expires = DateTime.Now.AddDays(7);
                 var longToken = tokenHandler.CreateToken(tokenDescriptor);
-                return [tokenHandler.WriteToken(shortToken), tokenHandler.WriteToken(longToken)];
+                return new[] { tokenHandler.WriteToken(shortToken), tokenHandler.WriteToken(longToken) };
             }
             catch (Exception e)
             {
-                _errorHandler.HandleError(e, _logger, typeof(JWTService).FullName!);
+                _errorHandler.HandleError(e);
                 throw;
             }
         }
@@ -87,24 +68,22 @@ namespace TicketProject.Services.Implement
             try
             {
                 var principal = VerifyToken(token);
+                if (principal == null)
+                    return null;
 
                 var identity = (ClaimsIdentity)principal!.Identity!;
                 var user = new User
                 {
                     UserId = int.Parse(identity.FindFirst(ClaimTypes.NameIdentifier)!.Value),
-                    Username = identity.FindFirst(ClaimTypes.Name)!.Value,
+                    UserName = identity.FindFirst(ClaimTypes.Name)!.Value,
                     Email = identity.FindFirst(ClaimTypes.Email)!.Value,
                     IsAdmin = (int)Enum.Parse<Enums.UserRoles>(identity.FindFirst(ClaimTypes.Role)!.Value)
                 };
                 return GenerateJwtToken(user);
             }
-            catch (SecurityTokenValidationException)
-            {
-                return null;
-            }
             catch (Exception e)
             {
-                _errorHandler.HandleError(e, _logger, typeof(JWTService).FullName!);
+                _errorHandler.HandleError(e);
                 throw;
             }
         }
@@ -114,7 +93,7 @@ namespace TicketProject.Services.Implement
         /// </summary>
         /// <param name="token">令牌。</param>
         /// <returns>驗證後的聲明主體。</returns>
-        public ClaimsPrincipal VerifyToken(string token)
+        private ClaimsPrincipal? VerifyToken(string token)
         {
             try
             {
@@ -132,11 +111,41 @@ namespace TicketProject.Services.Implement
             }
             catch (SecurityTokenValidationException)
             {
-                throw;
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
             }
             catch (Exception e)
             {
-                _errorHandler.HandleError(e, _logger, typeof(JWTService).FullName!);
+                _errorHandler.HandleError(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 為指定的使用者生成聲明。
+        /// </summary>
+        /// <param name="user">使用者。</param>
+        /// <returns>聲明身份。</returns>
+        private ClaimsIdentity GenerateClaims(User user)
+        {
+            try
+            {
+                return new ClaimsIdentity(
+                new[]
+                {
+                        new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                        new Claim(ClaimTypes.Name, user.UserName!),
+                        new Claim(ClaimTypes.Email, user.Email!),
+                        new Claim(ClaimTypes.Role, ((Enums.UserRoles)user.IsAdmin!).ToString())
+                }, "Bearer"
+                );
+            }
+            catch (Exception e)
+            {
+                _errorHandler.HandleError(e);
                 throw;
             }
         }

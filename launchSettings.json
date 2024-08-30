@@ -8,7 +8,8 @@
       "composeLaunchUrl": "{Scheme}://localhost:8080/swagger",
       "serviceActions": {
         "ticketproject": "StartDebugging",
-        "mssql": "StartWithoutDebugging",
+        "mssql-master": "StartWithoutDebugging",
+        "mssql-slave": "StartWithoutDebugging",
         "nginx": "StartWithoutDebugging",
         "rabbitmq": "StartWithoutDebugging",
         "redis": "StartWithoutDebugging",
