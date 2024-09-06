@@ -9,11 +9,11 @@ public partial class Order
 
     public int UserId { get; set; }
 
-    public DateTime? OrderDate { get; set; }
+    public DateTime OrderDate { get; set; }
 
-    public decimal? TotalAmount { get; set; }
+    public decimal TotalAmount { get; set; }
 
-    public string? Status { get; set; }
+    public string Status { get; set; } = null!;
 
     public DateTime? UpdatedAt { get; set; }
 

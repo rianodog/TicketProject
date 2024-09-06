@@ -9,11 +9,9 @@ public partial class OrderItem
 
     public int OrderId { get; set; }
 
-    public int TicketId { get; set; }
+    public int TicketContentId { get; set; }
 
-    public int? Quantity { get; set; }
-
-    public decimal? UnitPrice { get; set; }
+    public int Quantity { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -21,5 +19,7 @@ public partial class OrderItem
 
     public virtual Order Order { get; set; } = null!;
 
-    public virtual Ticket Ticket { get; set; } = null!;
+    public virtual Ticket? Ticket { get; set; }
+
+    public virtual TicketContent TicketContent { get; set; } = null!;
 }

@@ -7,21 +7,19 @@ public partial class Ticket
 {
     public int TicketId { get; set; }
 
-    public int EventId { get; set; }
+    public int TicketContentId { get; set; }
 
-    public string? TicketType { get; set; }
+    public int UserId { get; set; }
 
-    public decimal? Price { get; set; }
-
-    public int? QuantityAvailable { get; set; }
-
-    public int? QuantitySold { get; set; }
+    public int OrderItemId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Event Event { get; set; } = null!;
+    public virtual TicketContent TicketContent { get; set; } = null!;
 
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual OrderItem TicketNavigation { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
 }

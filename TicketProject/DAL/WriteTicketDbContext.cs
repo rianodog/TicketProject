@@ -16,7 +16,7 @@ public partial class WriteTicketDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Event> Events { get; set; }
+    public virtual DbSet<Campaign> Campaigns { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
 
@@ -26,25 +26,26 @@ public partial class WriteTicketDbContext : DbContext
 
     public virtual DbSet<Ticket> Tickets { get; set; }
 
-    public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<TicketContent> TicketContents { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Event>(entity =>
+        modelBuilder.Entity<Campaign>(entity =>
         {
-            entity.HasKey(e => e.EventId).HasName("PK__Events__7944C870CD35EC1B");
+            entity.HasKey(e => e.CampaignId).HasName("PK__Events__7944C870CD35EC1B");
 
-            entity.Property(e => e.EventId).HasColumnName("EventID");
+            entity.ToTable("Campaign");
+
+            entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
+            entity.Property(e => e.CampaignDate).HasColumnType("datetime");
+            entity.Property(e => e.CampaignName).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.EventDate).HasColumnType("datetime");
-            entity.Property(e => e.EventName).HasMaxLength(100);
             entity.Property(e => e.Location).HasMaxLength(100);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<Order>(entity =>
@@ -59,9 +60,7 @@ public partial class WriteTicketDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
@@ -79,21 +78,18 @@ public partial class WriteTicketDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.TicketId).HasColumnName("TicketID");
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.TicketContentId).HasColumnName("TicketContentID");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__OrderItem__Order__4D94879B");
 
-            entity.HasOne(d => d.Ticket).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.TicketId)
+            entity.HasOne(d => d.TicketContent).WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.TicketContentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderItem__Ticke__4E88ABD4");
+                .HasConstraintName("FK__OrderItem__TickeContent");
         });
 
         modelBuilder.Entity<SystemLog>(entity =>
@@ -114,24 +110,52 @@ public partial class WriteTicketDbContext : DbContext
         {
             entity.HasKey(e => e.TicketId).HasName("PK__Tickets__712CC627E4915567");
 
-            entity.Property(e => e.TicketId).HasColumnName("TicketID");
+            entity.Property(e => e.TicketId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("TicketID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.EventId).HasColumnName("EventID");
-            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.QuantitySold).HasDefaultValue(0);
-            entity.Property(e => e.TicketType)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.UpdatedAt)
+            entity.Property(e => e.OrderItemId).HasColumnName("OrderItemID");
+            entity.Property(e => e.TicketContentId).HasColumnName("TicketContentID");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.TicketContent).WithMany(p => p.Tickets)
+                .HasForeignKey(d => d.TicketContentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Tickets_TicketContent");
+
+            entity.HasOne(d => d.TicketNavigation).WithOne(p => p.Ticket)
+                .HasForeignKey<Ticket>(d => d.TicketId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Tickets_OrderItems");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Tickets)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Tickets_UserID");
+        });
+
+        modelBuilder.Entity<TicketContent>(entity =>
+        {
+            entity.HasKey(e => e.TicketContentId).HasName("PK__TicketTy__6CD684317A0AC608");
+
+            entity.ToTable("TicketContent");
+
+            entity.Property(e => e.TicketContentId).HasColumnName("TicketContentID");
+            entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
+            entity.Property(e => e.CreateAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TypeName).HasMaxLength(100);
+            entity.Property(e => e.UpdateAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Event).WithMany(p => p.Tickets)
-                .HasForeignKey(d => d.EventId)
+            entity.HasOne(d => d.Campaign).WithMany(p => p.TicketContents)
+                .HasForeignKey(d => d.CampaignId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Tickets__EventID__440B1D61");
+                .HasConstraintName("FK_TicketContent_Campaign");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -147,16 +171,13 @@ public partial class WriteTicketDbContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .IsUnicode(false);
-            entity.Property(e => e.IsAdmin).HasDefaultValue(0);
             entity.Property(e => e.PasswordHash)
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(20)
                 .IsUnicode(false);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.UserName).HasMaxLength(50);
         });
 

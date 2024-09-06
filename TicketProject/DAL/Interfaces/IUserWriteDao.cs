@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-using TicketProject.Models.Dto;
-using TicketProject.Models.Entity;
+﻿using TicketProject.Models.Entity;
 
 namespace TicketProject.DAL.Interfaces
 {

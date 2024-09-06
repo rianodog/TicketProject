@@ -13,12 +13,12 @@ public class CommandMappingProfile : Profile
     /// </summary>  
     public CommandMappingProfile()
     {
-        // CreateEventHandler  
-        CreateMap<CreateEventCommand, Event>()
-            .ForMember(dest => dest.Tickets, opt => opt.Ignore())
+        // CreateCampaignHandler  
+        CreateMap<CreateCampaignCommand, Campaign>()
             .ReverseMap()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-        CreateMap<CreateTicketDto, Ticket>()
+        // Campaign在對應時遇到子物件若有符合的規則也會自動套用，將Dto轉為Entity
+        CreateMap<CreateCampaign_TicketContentDto, TicketContent>()
             .ReverseMap()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
