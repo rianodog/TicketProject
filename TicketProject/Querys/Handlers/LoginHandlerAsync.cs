@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using TicketProject.DAL.Interfaces;
-using TicketProject.Helpers;
 using TicketProject.Models.Entity;
+using TicketProject.Services.Implement;
 using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Querys.Handlers
@@ -12,6 +12,7 @@ namespace TicketProject.Querys.Handlers
     public class LoginHandlerAsync : IRequestHandler<LoginQuery, User?>
     {
         private readonly IErrorHandler<LoginHandlerAsync> _errorHandler;
+        private readonly IHashService _hashService;
         private readonly IUserReadDao _userReadDao;
 
         /// <summary>  
@@ -19,10 +20,11 @@ namespace TicketProject.Querys.Handlers
         /// </summary>  
         /// <param name="errorHandler">錯誤處理器。</param>  
         /// <param name="userReadDao">用戶讀取資料訪問物件。</param>  
-        public LoginHandlerAsync(IErrorHandler<LoginHandlerAsync> errorHandler, IUserReadDao userReadDao)
+        public LoginHandlerAsync(IErrorHandler<LoginHandlerAsync> errorHandler, IUserReadDao userReadDao, IHashService hashService)
         {
             _errorHandler = errorHandler;
             _userReadDao = userReadDao;
+            _hashService = hashService;
         }
 
         /// <summary>  
@@ -35,7 +37,7 @@ namespace TicketProject.Querys.Handlers
         {
             try
             {
-                var passwordHash = await HashHelper.HashPassword(request.Password);
+                var passwordHash = await _hashService.HashPassword(request.Password);
                 var user = await _userReadDao.GetUserAsync(u => (u.Email == request.Account || u.PhoneNumber == request.Account)
                     && u.PasswordHash == passwordHash);
                 return user ?? null;

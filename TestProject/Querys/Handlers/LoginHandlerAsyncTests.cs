@@ -3,9 +3,9 @@ using Moq;
 using TicketProject.Models.Entity;
 using TicketProject.Querys.Handlers;
 using TicketProject.DAL.Interfaces;
-using TicketProject.Helpers;
 using TicketProject.Services.Interfaces;
 using TicketProject.Querys;
+using TicketProject.Services.Implement;
 
 namespace TicketProject.Tests.Querys.Handlers
 {
@@ -15,6 +15,7 @@ namespace TicketProject.Tests.Querys.Handlers
     public class LoginHandlerAsyncTests
     {
         private readonly LoginHandlerAsync _loginHandler;
+        private readonly IHashService _hashService;
         private readonly Mock<IUserReadDao> _userReadDaoMock;
         private readonly Mock<IErrorHandler<LoginHandlerAsync>> _errorHandlerMock;
 
@@ -25,10 +26,12 @@ namespace TicketProject.Tests.Querys.Handlers
         {
             _userReadDaoMock = new Mock<IUserReadDao>();
             _errorHandlerMock = new Mock<IErrorHandler<LoginHandlerAsync>>();
+            _hashService = new HashService();
 
             _loginHandler = new LoginHandlerAsync(
                 _errorHandlerMock.Object,
-                _userReadDaoMock.Object
+                _userReadDaoMock.Object,
+                _hashService
             );
         }
 
@@ -45,7 +48,7 @@ namespace TicketProject.Tests.Querys.Handlers
                 Password = "password"
             };
 
-            var user = new User { Email = "test@example.com", PasswordHash = await HashHelper.HashPassword("password") };
+            var user = new User { Email = "test@example.com", PasswordHash = await _hashService.HashPassword("password") };
             _userReadDaoMock.Setup(u => u.GetUserAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(user);
             _errorHandlerMock.Setup(e => e.HandleError(It.IsAny<Exception>()));
 
