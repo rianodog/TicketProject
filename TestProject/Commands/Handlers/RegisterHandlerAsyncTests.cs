@@ -1,9 +1,11 @@
 using AutoMapper;
 using Moq;
+using TicketProject.AutoMapper;
 using TicketProject.Commands;
 using TicketProject.Commands.Handlers;
 using TicketProject.DAL.Interfaces;
 using TicketProject.Models.Entity;
+using TicketProject.Services.Implement;
 using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Tests.Commands.Handlers
@@ -15,6 +17,7 @@ namespace TicketProject.Tests.Commands.Handlers
     {
         private readonly RegisterHandlerAsync _registerHandler;
         private readonly Mock<IUserWriteDao> _userWriteDaoMock;
+        private readonly IHashService _hashService;
         private readonly Mock<IErrorHandler<RegisterHandlerAsync>> _errorHandlerMock;
         private readonly IMapper _mapper;
 
@@ -25,6 +28,7 @@ namespace TicketProject.Tests.Commands.Handlers
         {
             _userWriteDaoMock = new Mock<IUserWriteDao>();
             _errorHandlerMock = new Mock<IErrorHandler<RegisterHandlerAsync>>();
+            _hashService = new HashService();
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -35,7 +39,8 @@ namespace TicketProject.Tests.Commands.Handlers
             _registerHandler = new RegisterHandlerAsync(
                 _userWriteDaoMock.Object,
                 _errorHandlerMock.Object,
-                _mapper
+                _mapper,
+                _hashService
             );
         }
 

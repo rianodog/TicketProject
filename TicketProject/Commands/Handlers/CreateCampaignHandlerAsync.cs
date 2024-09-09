@@ -38,7 +38,6 @@ namespace TicketProject.Commands.Handlers
         {
             try
             {
-                //var ticketContent = _mapper.Map<TicketContent>(request.TicketContents);
                 var campaign = _mapper.Map<Campaign>(request);
                 var result =  await _campaignWriteDao.CreateCampaignAsync(campaign);
                 return _mapper.Map<CreateCampaignCommand>(result);

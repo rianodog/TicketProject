@@ -1,9 +1,9 @@
 ﻿using MediatR;
 using TicketProject.Models.Entity;
 using TicketProject.DAL.Interfaces;
-using TicketProject.Helpers;
 using TicketProject.Services.Interfaces;
 using AutoMapper;
+using TicketProject.Services.Implement;
 
 namespace TicketProject.Commands.Handlers
 {
@@ -13,6 +13,7 @@ namespace TicketProject.Commands.Handlers
     public class RegisterHandlerAsync : IRequestHandler<RegisterCommand, User>
     {
         private readonly IUserWriteDao _UserWriteDao;
+        private readonly IHashService _hashService;
         private readonly IErrorHandler<RegisterHandlerAsync> _errorHandler;
         private readonly IMapper _mapper;
 
@@ -22,11 +23,12 @@ namespace TicketProject.Commands.Handlers
         /// <param name="userDao">使用者寫入資料訪問物件。</param>  
         /// <param name="errorHandler">錯誤處理器。</param>  
         /// <param name="mapper">AutoMapper 介面。</param>  
-        public RegisterHandlerAsync(IUserWriteDao userDao, IErrorHandler<RegisterHandlerAsync> errorHandler, IMapper mapper)
+        public RegisterHandlerAsync(IUserWriteDao userDao, IErrorHandler<RegisterHandlerAsync> errorHandler, IMapper mapper, IHashService hashService)
         {
             _UserWriteDao = userDao;
             _errorHandler = errorHandler;
             _mapper = mapper;
+            _hashService = hashService;
         }
 
         /// <summary>  
@@ -39,7 +41,7 @@ namespace TicketProject.Commands.Handlers
         {
             try
             {
-                request.PasswordHash = await HashHelper.HashPassword(request.PasswordHash!);
+                request.PasswordHash = await _hashService.HashPassword(request.PasswordHash!);
                 var user = _mapper.Map<User>(request);
                 return await _UserWriteDao.AddUserAsync(user);
             }

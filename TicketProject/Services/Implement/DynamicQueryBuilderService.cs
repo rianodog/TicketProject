@@ -1,13 +1,14 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using TicketProject.Services.Interfaces;
 
-namespace TicketProject.Helpers
+namespace TicketProject.Services.Implement
 {
     /// <summary>
     /// 用於建立動態查詢過濾器。
     /// </summary>
     /// <typeparam name="T">實體的類型。</typeparam>
-    public static class DynamicQueryBuilder<T> where T : class
+    public class DynamicQueryBuilderService<T> : IDynamicQueryBuilderService<T> where T : class
     {
         /// <summary>
         /// 使用指定的條件，將兩個過濾表達式結合起來建立過濾器表達式。
@@ -16,7 +17,7 @@ namespace TicketProject.Helpers
         /// <param name="newFilter">要與原始過濾器結合的新過濾表達式。</param>
         /// <param name="condition">用於結合過濾表達式的條件，預設為 "And"，可替換為"Or"</param>
         /// <returns>結合後的過濾器表達式。</returns>
-        public static Expression<Func<T, bool>> BuildFilter(Expression<Func<T, bool>> filter, Expression<Func<T, bool>> newFilter, string condition = "And")
+        public Expression<Func<T, bool>> BuildFilter(Expression<Func<T, bool>> filter, Expression<Func<T, bool>> newFilter, string condition = "And")
         {
             // 取得原始過濾表達式的參數
             var parameter = filter.Parameters[0];
@@ -45,7 +46,7 @@ namespace TicketProject.Helpers
         /// <param name="oldParameter">舊的參數。</param>
         /// <param name="newParameter">新的參數。</param>
         /// <returns>替換參數後的表達式。</returns>
-        private static Expression ReplaceParameter(Expression expression, ParameterExpression oldParameter, ParameterExpression newParameter)
+        private Expression ReplaceParameter(Expression expression, ParameterExpression oldParameter, ParameterExpression newParameter)
         {
             return new ParameterReplacer(oldParameter, newParameter).Visit(expression);
         }

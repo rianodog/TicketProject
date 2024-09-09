@@ -8,7 +8,7 @@ using TicketProject.DAL;
 using System.Reflection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace TicketProject.Helpers
+namespace TicketProject.Services
 {
     public static class ServiceCollectionExtensions
     {
@@ -46,14 +46,25 @@ namespace TicketProject.Helpers
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
+            services.AddSingleton(async serviceProvider =>
+            {
+                var redisSercice = serviceProvider.GetRequiredService<RedisService>();
+                await redisSercice.Initialize();
+                return redisSercice;
+            });
+
             // 泛型服務註冊方式
             services.AddTransient(typeof(IErrorHandler<>), typeof(ErrorHandler<>));
+            services.AddTransient(typeof(IDynamicQueryBuilderService<>), typeof(DynamicQueryBuilderService<>));
 
             services.AddTransient<IUserWriteDao, UserWriteDao>();
             services.AddTransient<IUserReadDao, UserReadDao>();
-            services.AddTransient<IEventWriteDao, EventWriteDao>();
+            services.AddTransient<ICampaignWriteDao, CampaignWriteDao>();
+            services.AddTransient<ICampaignReadDao, CampaignReadDao>();
 
             services.AddTransient<IJWTService, JWTService>();
+            services.AddTransient<IHashService, HashService>();
+            services.AddTransient<IRetryService, RetryService>();
 
         }
     }

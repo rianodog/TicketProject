@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Moq;
+using TicketProject.AutoMapper;
 using TicketProject.Commands;
 using TicketProject.Commands.Handlers;
 using TicketProject.DAL.Interfaces;

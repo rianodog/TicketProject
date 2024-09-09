@@ -1,12 +1,13 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using TicketProject.Services.Interfaces;
 
-namespace TicketProject.Helpers
+namespace TicketProject.Services.Implement
 {
     /// <summary>  
-    /// 提供雜湊功能的輔助類別。  
+    /// 提供雜湊功能的輔助服務。  
     /// </summary>  
-    public static class HashHelper
+    public class HashService : IHashService
     {
         /// <summary>  
         /// 使用 SHA256 演算法對密碼進行雜湊。  
@@ -14,7 +15,7 @@ namespace TicketProject.Helpers
         /// <param name="password">要雜湊的密碼。</param>  
         /// <returns>雜湊後的密碼字串。</returns>  
         /// <exception cref="Exception">當雜湊過程中發生錯誤時拋出。</exception>  
-        public static async Task<string> HashPassword(string password)
+        public async Task<string> HashPassword(string password)
         {
             try
             {
