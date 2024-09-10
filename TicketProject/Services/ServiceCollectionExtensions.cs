@@ -7,6 +7,8 @@ using TicketProject.Services.Interfaces;
 using TicketProject.DAL;
 using System.Reflection;
 using Microsoft.IdentityModel.Tokens;
+using TicketProject.Factory.Interfaces;
+using TicketProject.Factory.Implement;
 
 namespace TicketProject.Services
 {
@@ -46,12 +48,8 @@ namespace TicketProject.Services
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
-            services.AddSingleton(async serviceProvider =>
-            {
-                var redisSercice = serviceProvider.GetRequiredService<RedisService>();
-                await redisSercice.Initialize();
-                return redisSercice;
-            });
+            services.AddTransient<IRedisServiceFactory, RedisServiceFactory>();
+            services.AddSingleton(serviesProvider => serviesProvider.GetRequiredService<IRedisServiceFactory>().Create());
 
             // 泛型服務註冊方式
             services.AddTransient(typeof(IErrorHandler<>), typeof(ErrorHandler<>));
