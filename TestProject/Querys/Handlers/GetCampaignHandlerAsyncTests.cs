@@ -1,74 +1,120 @@
-using Moq;
 using System.Linq.Expressions;
+using Moq;
 using TicketProject.DAL.Interfaces;
 using TicketProject.Models.Entity;
 using TicketProject.Querys;
 using TicketProject.Querys.Handlers;
-using TicketProject.Services.Implement;
 using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Tests.Querys.Handlers
 {
     /// <summary>
-    /// GetCampaignHandlerAsync 類別的單元測試。
+    /// GetCampaignHandlerAsync 的單元測試類別。
     /// </summary>
     public class GetCampaignHandlerAsyncTests
     {
         private readonly Mock<ICampaignReadDao> _mockCampaignReadDao;
-        private readonly IDynamicQueryBuilderService<Campaign> _dynamicQueryBuilderService;
+        private readonly Mock<IDynamicQueryBuilderService<Campaign>> _mockDynamicQueryBuilderService;
         private readonly Mock<IErrorHandler<GetCampaignHandlerAsync>> _mockErrorHandler;
         private readonly GetCampaignHandlerAsync _handler;
 
         /// <summary>
-        /// 初始化 GetCampaignHandlerAsyncTests 類別的新執行個體。
+        /// 初始化 GetCampaignHandlerAsyncTests 類別的新實例。
         /// </summary>
         public GetCampaignHandlerAsyncTests()
         {
-            _dynamicQueryBuilderService = new DynamicQueryBuilderService<Campaign>();
-
             _mockCampaignReadDao = new Mock<ICampaignReadDao>();
+            _mockDynamicQueryBuilderService = new Mock<IDynamicQueryBuilderService<Campaign>>();
             _mockErrorHandler = new Mock<IErrorHandler<GetCampaignHandlerAsync>>();
-            _handler = new GetCampaignHandlerAsync(_mockCampaignReadDao.Object, _mockErrorHandler.Object, _dynamicQueryBuilderService);
+            _handler = new GetCampaignHandlerAsync(_mockCampaignReadDao.Object, _mockErrorHandler.Object, _mockDynamicQueryBuilderService.Object);
         }
 
         /// <summary>
-        /// 測試案例以驗證當存在該活動時，Handle 方法是否會返回活動。
+        /// 測試 Handle 方法在沒有篩選條件時是否能正確返回所有活動。
         /// </summary>
-        /// <returns>表示非同步作業的工作。</returns>
         [Fact]
-        public async Task Handle_ShouldReturnCampaign_WhenCampaignExists()
+        public async Task Handle_ShouldReturnAllCampaigns_WhenNoFiltersProvided()
         {
-            // 安排
-            var campaign = new Campaign { CampaignName = "Test Campaign" };
-            var query = new GetCampaignQuery { CampaignName = "Test Campaign" };
-            _mockCampaignReadDao.Setup(dao => dao.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>()))
-                .ReturnsAsync(campaign);
+            // Arrange
+            var request = new GetCampaignQuery();
+            var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
 
-            // 執行
-            var result = await _handler.Handle(query, CancellationToken.None);
+            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+                .ReturnsAsync(campaigns);
 
-            // 斷言
+            // Act
+            var result = await _handler.Handle(request, CancellationToken.None);
+
+            // Assert
             Assert.NotNull(result);
-            Assert.Equal("Test Campaign", result.CampaignName);
+            Assert.Single(result);
+            Assert.Equal("Test Campaign", result.First().CampaignName);
         }
 
         /// <summary>
-        /// 測試案例以驗證當該活動不存在時，Handle 方法是否會返回 null。
+        /// 測試 Handle 方法在提供篩選條件時是否能正確返回符合條件的活動。
         /// </summary>
-        /// <returns>表示非同步作業的工作。</returns>
         [Fact]
-        public async Task Handle_ShouldReturnNull_WhenCampaignDoesNotExist()
+        public async Task Handle_ShouldReturnFilteredCampaigns_WhenFiltersProvided()
         {
-            // 安排
-            var query = new GetCampaignQuery { CampaignName = "Nonexistent Campaign" };
-            _mockCampaignReadDao.Setup(dao => dao.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>()))
-                .ReturnsAsync((Campaign?)null);
+            // Arrange
+            var request = new GetCampaignQuery { CampaignName = "Test Campaign" };
+            var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
 
-            // 執行
-            var result = await _handler.Handle(query, CancellationToken.None);
+            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+                .ReturnsAsync(campaigns);
 
-            // 斷言
-            Assert.Null(result);
+            _mockDynamicQueryBuilderService.Setup(d => d.BuildFilter(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+                .Returns<Expression<Func<Campaign, bool>>, Expression<Func<Campaign, bool>>, string>((current, newFilter, str) => newFilter);
+
+            // Act
+            var result = await _handler.Handle(request, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal("Test Campaign", result.First().CampaignName);
+        }
+
+        /// <summary>
+        /// 測試 Handle 方法在提供城市篩選條件時是否能正確使用快取。
+        /// </summary>
+        [Fact]
+        public async Task Handle_ShouldUseCache_WhenCityFilterProvided()
+        {
+            // Arrange
+            var request = new GetCampaignQuery { City = "SampleCity" };
+            var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
+
+            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), "SampleCity"))
+                .ReturnsAsync(campaigns);
+
+            // Act
+            var result = await _handler.Handle(request, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal("Test Campaign", result.First().CampaignName);
+        }
+
+        /// <summary>
+        /// 測試 Handle 方法在發生異常時是否能正確處理錯誤。
+        /// </summary>
+        [Fact]
+        public async Task Handle_ShouldHandleError_WhenExceptionThrown()
+        {
+            // Arrange
+            var request = new GetCampaignQuery();
+            var exception = new Exception("Test exception");
+
+            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+                .ThrowsAsync(exception);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _handler.Handle(request, CancellationToken.None));
+            _mockErrorHandler.Verify(e => e.HandleError(exception), Times.Once);
         }
     }
 }
+

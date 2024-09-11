@@ -17,7 +17,7 @@ namespace TicketProject.Tests.Commands.Handlers
     {
         private readonly RegisterHandlerAsync _registerHandler;
         private readonly Mock<IUserWriteDao> _userWriteDaoMock;
-        private readonly IHashService _hashService;
+        private readonly Mock<IHashService> _hashServiceMock;
         private readonly Mock<IErrorHandler<RegisterHandlerAsync>> _errorHandlerMock;
         private readonly IMapper _mapper;
 
@@ -28,7 +28,7 @@ namespace TicketProject.Tests.Commands.Handlers
         {
             _userWriteDaoMock = new Mock<IUserWriteDao>();
             _errorHandlerMock = new Mock<IErrorHandler<RegisterHandlerAsync>>();
-            _hashService = new HashService();
+            _hashServiceMock = new Mock<IHashService>();
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -40,7 +40,7 @@ namespace TicketProject.Tests.Commands.Handlers
                 _userWriteDaoMock.Object,
                 _errorHandlerMock.Object,
                 _mapper,
-                _hashService
+                _hashServiceMock.Object
             );
         }
 
