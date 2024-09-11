@@ -89,7 +89,17 @@ namespace TicketProject.Services.Implement
             {
                 if (node.Expression is ConstantExpression constantExpression)
                 {
-                    var value = ((FieldInfo)node.Member).GetValue(constantExpression.Value);
+                    var member = node.Member;
+                    object? value = null;
+
+                    if (member is FieldInfo fieldInfo)
+                    {
+                        value = fieldInfo.GetValue(constantExpression.Value);
+                    }
+                    else if (member is PropertyInfo propertyInfo)
+                    {
+                        value = propertyInfo.GetValue(constantExpression.Value);
+                    }
                     return Expression.Constant(value, node.Type);
                 }
                 return base.VisitMember(node);

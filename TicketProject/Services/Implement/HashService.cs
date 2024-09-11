@@ -9,6 +9,13 @@ namespace TicketProject.Services.Implement
     /// </summary>  
     public class HashService : IHashService
     {
+        private readonly IErrorHandler<HashService> _errorHandler;
+
+        public HashService(IErrorHandler<HashService> errorHandler)
+        {
+            _errorHandler = errorHandler;
+        }
+
         /// <summary>  
         /// 使用 SHA256 演算法對密碼進行雜湊。  
         /// </summary>  
@@ -28,8 +35,9 @@ namespace TicketProject.Services.Implement
                 }
                 return builder.ToString();
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _errorHandler.HandleError(e);
                 throw;
             }
         }
