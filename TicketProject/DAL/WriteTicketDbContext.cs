@@ -29,6 +29,7 @@ public partial class WriteTicketDbContext : DbContext
     public virtual DbSet<TicketContent> TicketContents { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Campaign>(entity =>
@@ -40,11 +41,12 @@ public partial class WriteTicketDbContext : DbContext
             entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
             entity.Property(e => e.CampaignDate).HasColumnType("datetime");
             entity.Property(e => e.CampaignName).HasMaxLength(100);
+            entity.Property(e => e.City).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.Location).HasMaxLength(100);
+            entity.Property(e => e.Location).HasMaxLength(500);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 

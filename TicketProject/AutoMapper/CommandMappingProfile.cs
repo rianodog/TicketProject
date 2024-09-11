@@ -26,7 +26,7 @@ namespace TicketProject.AutoMapper
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // GetCampaignsHandller
-            CreateMap<GetCampaignsQuery, Campaign>()
+            CreateMap<GetCampaignQuery, Campaign>()
                 .ReverseMap()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 

@@ -5,8 +5,6 @@ namespace TicketProject.DAL.Interfaces
 {
     public interface ICampaignReadDao
     {
-        public Task<Campaign?> GetCampaignAsync(Expression<Func<Campaign, bool>> filter);
-        public Task<List<Campaign>> GetCampaignsAsync(Expression<Func<Campaign, bool>> filter);
-        public Task<List<Campaign>> GetAllCampaignAsync();
+        Task<List<Campaign>> GetCampaignAsync(Expression<Func<Campaign, bool>> filter, string useCache);
     }
 }

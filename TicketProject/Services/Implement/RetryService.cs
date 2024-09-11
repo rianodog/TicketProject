@@ -2,8 +2,19 @@
 
 namespace TicketProject.Services.Implement
 {
+    /// <summary>
+    /// 提供重試機制的服務。
+    /// </summary>
     public class RetryService : IRetryService
     {
+        /// <summary>
+        /// 同步重試指定的操作。
+        /// </summary>
+        /// <param name="func">要重試的操作。</param>
+        /// <param name="retryTimeSpan">重試之間的時間間隔（毫秒）。</param>
+        /// <param name="retryCount">重試次數，默認為3次。</param>
+        /// <exception cref="ArgumentOutOfRangeException">當 retryCount 或 retryTimeSpan 為負數或零時拋出。</exception>
+        /// <exception cref="Exception">當重試次數達到上限時拋出。</exception>
         public void Retry(Action func, int retryTimeSpan, int retryCount = 3)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryCount);
@@ -23,10 +34,20 @@ namespace TicketProject.Services.Implement
                     if (attempts == retryCount)
                         throw;
 
-                    Task.Delay(retryTimeSpan);
+                    Task.Delay(retryTimeSpan).Wait();
                 }
             }
         }
+
+        /// <summary>
+        /// 異步重試指定的操作。
+        /// </summary>
+        /// <param name="func">要重試的異步操作。</param>
+        /// <param name="retryTimeSpan">重試之間的時間間隔（毫秒）。</param>
+        /// <param name="retryCount">重試次數，默認為3次。</param>
+        /// <returns>一個表示異步操作的 Task。</returns>
+        /// <exception cref="ArgumentOutOfRangeException">當 retryCount 或 retryTimeSpan 為負數或零時拋出。</exception>
+        /// <exception cref="Exception">當重試次數達到上限時拋出。</exception>
         public async Task RetryAsync(Func<Task> func, int retryTimeSpan, int retryCount = 3)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryCount);
@@ -50,6 +71,17 @@ namespace TicketProject.Services.Implement
                 }
             }
         }
+
+        /// <summary>
+        /// 同步重試指定的操作並返回結果。
+        /// </summary>
+        /// <typeparam name="T">操作返回的結果類型。</typeparam>
+        /// <param name="func">要重試的操作。</param>
+        /// <param name="retryTimeSpan">重試之間的時間間隔（毫秒）。</param>
+        /// <param name="retryCount">重試次數，默認為3次。</param>
+        /// <returns>操作的結果。</returns>
+        /// <exception cref="ArgumentOutOfRangeException">當 retryCount 或 retryTimeSpan 為負數或零時拋出。</exception>
+        /// <exception cref="Exception">當重試次數達到上限時拋出。</exception>
         public T Retry<T>(Func<T> func, int retryTimeSpan, int retryCount = 3)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryCount);
@@ -68,11 +100,21 @@ namespace TicketProject.Services.Implement
                     if (attempts == retryCount)
                         throw;
 
-                    Task.Delay(retryTimeSpan);
+                    Task.Delay(retryTimeSpan).Wait();
                 }
             }
         }
 
+        /// <summary>
+        /// 異步重試指定的操作並返回結果。
+        /// </summary>
+        /// <typeparam name="T">操作返回的結果類型。</typeparam>
+        /// <param name="func">要重試的異步操作。</param>
+        /// <param name="retryTimeSpan">重試之間的時間間隔（毫秒）。</param>
+        /// <param name="retryCount">重試次數，默認為3次。</param>
+        /// <returns>操作的結果。</returns>
+        /// <exception cref="ArgumentOutOfRangeException">當 retryCount 或 retryTimeSpan 為負數或零時拋出。</exception>
+        /// <exception cref="Exception">當重試次數達到上限時拋出。</exception>
         public async Task<T> RetryAsync<T>(Func<Task<T>> func, int retryTimeSpan, int retryCount = 3)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryCount);

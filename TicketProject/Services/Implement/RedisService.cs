@@ -4,19 +4,31 @@ using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Services.Implement
 {
+    /// <summary>
+    /// 提供 Redis 快取服務的實現。
+    /// 測試於CampaignReadDaoTests進行實現。
+    /// </summary>
     public class RedisService : IRedisService
     {
         private readonly IConfiguration _configuration;
         private readonly IErrorHandler<RedisService> _errorHandler;
-        // 由初始化時指派 不指定readonly
         private IDatabase? _db;
 
+        /// <summary>
+        /// 初始化 RedisService 類別的新實例。
+        /// </summary>
+        /// <param name="configuration">應用程式的配置。</param>
+        /// <param name="errorHandler">錯誤處理器。</param>
         public RedisService(IConfiguration configuration, IErrorHandler<RedisService> errorHandler)
         {
             _configuration = configuration;
             _errorHandler = errorHandler;
         }
 
+        /// <summary>
+        /// 初始化 Redis 連接並獲取資料庫實例。
+        /// </summary>
+        /// <exception cref="Exception">當連接 Redis 失敗時拋出。</exception>
         public void Initialize()
         {
             try
@@ -31,6 +43,12 @@ namespace TicketProject.Services.Implement
             }
         }
 
+        /// <summary>
+        /// 從 Redis 快取中獲取資料。
+        /// </summary>
+        /// <typeparam name="T">資料的類型。</typeparam>
+        /// <param name="cacheKey">快取鍵。</param>
+        /// <returns>快取中的資料，如果不存在則返回默認值。</returns>
         public async Task<T?> GetCacheAsync<T>(string cacheKey)
         {
             try
@@ -49,6 +67,13 @@ namespace TicketProject.Services.Implement
             }
         }
 
+        /// <summary>
+        /// 將資料設置到 Redis 快取中。
+        /// </summary>
+        /// <typeparam name="T">資料的類型。</typeparam>
+        /// <param name="cacheKey">快取鍵。</param>
+        /// <param name="data">要快取的資料。</param>
+        /// <param name="expiration">快取過期時間，可選。</param>
         public async Task SetCacheAsync<T>(string cacheKey, T data, TimeSpan? expiration = null)
         {
             try

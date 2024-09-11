@@ -11,6 +11,8 @@ public partial class Campaign
 
     public string Description { get; set; } = null!;
 
+    public string City { get; set; } = null!;
+
     public string Location { get; set; } = null!;
 
     public DateTime CampaignDate { get; set; }

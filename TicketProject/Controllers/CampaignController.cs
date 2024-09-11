@@ -56,7 +56,7 @@ namespace TicketProject.Controllers
             }
         }
         [HttpGet("GetCampaigns")]
-        public async Task<IResult> GetCampaigns([FromQuery] GetCampaignsQuery getCampaignQuery)
+        public async Task<IResult> GetCampaigns([FromQuery] GetCampaignQuery getCampaignQuery)
         {
             try
             {
