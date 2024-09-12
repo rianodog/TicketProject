@@ -3,6 +3,7 @@ using TicketProject.Commands;
 using TicketProject.Models.Dto;
 using TicketProject.Models.Entity;
 using TicketProject.Querys;
+using static TicketProject.Models.Enums;
 
 /// <summary>  
 /// AutoMapper 配置檔案，用於命令和實體之間的映射。  
@@ -18,11 +19,15 @@ namespace TicketProject.AutoMapper
         {
             // CreateCampaignHandler  
             CreateMap<CreateCampaignCommand, Campaign>()
+                .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City.ToString()))
                 .ReverseMap()
+                .ForMember(dest => dest.City, opt => opt.MapFrom(src => Enum.Parse<City>(src.City)))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             // Campaign在對應時遇到子物件若有符合的規則也會自動套用，將Dto轉為Entity
             CreateMap<CreateCampaign_TicketContentDto, TicketContent>()
+                .ForMember(dest => dest.TypeName, opt => opt.MapFrom(src => src.TypeName.ToString()))
                 .ReverseMap()
+                .ForMember(dest => dest.TypeName, opt => opt.MapFrom(src => Enum.Parse<TicketType>(src.TypeName)))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // GetCampaignsHandller

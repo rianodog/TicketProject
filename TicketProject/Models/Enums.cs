@@ -9,8 +9,14 @@
         }
         public enum TicketType
         {
-            VIP,
-            Normal
+            Normal,
+            VIP
+        }
+        public enum City
+        {
+            台北,
+            台中,
+            台南
         }
     }
 }

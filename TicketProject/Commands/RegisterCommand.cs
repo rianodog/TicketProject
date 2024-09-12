@@ -16,7 +16,7 @@ namespace TicketProject.Commands
         [PhoneNumberValidation]
         public string? PhoneNumber { get; set; }
         [Required]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,12}$", ErrorMessage = "Password must be 6-12 characters long and include at least one uppercase letter, one lowercase letter, and one number.")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,12}$", ErrorMessage = "密碼必須為6-12個字符，並包含至少一個大寫字母、一個小寫字母和一個數字。")]
         public string? PasswordHash { get; set; }
     }
 }

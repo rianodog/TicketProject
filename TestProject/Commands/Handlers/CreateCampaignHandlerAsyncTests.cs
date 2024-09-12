@@ -4,9 +4,11 @@ using TicketProject.AutoMapper;
 using TicketProject.Commands;
 using TicketProject.Commands.Handlers;
 using TicketProject.DAL.Interfaces;
+using TicketProject.Models;
 using TicketProject.Models.Dto;
 using TicketProject.Models.Entity;
 using TicketProject.Services.Interfaces;
+using static TicketProject.Models.Enums;
 
 namespace TicketProject.Tests.Commands.Handlers
 {
@@ -17,6 +19,7 @@ namespace TicketProject.Tests.Commands.Handlers
     {
         private readonly Mock<ICampaignWriteDao> _mockCampaignWriteDao;
         private readonly Mock<IErrorHandler<CreateCampaignHandlerAsync>> _mockErrorHandler;
+        private readonly Mock<IRedisService> _mockRedisService;
         private readonly IMapper _mapper;
         private readonly CreateCampaignHandlerAsync _handler;
 
@@ -27,12 +30,13 @@ namespace TicketProject.Tests.Commands.Handlers
         {
             _mockCampaignWriteDao = new Mock<ICampaignWriteDao>();
             _mockErrorHandler = new Mock<IErrorHandler<CreateCampaignHandlerAsync>>();
+            _mockRedisService = new Mock<IRedisService>();
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<CommandMappingProfile>();
             });
             _mapper = config.CreateMapper();
-            _handler = new CreateCampaignHandlerAsync(_mockCampaignWriteDao.Object, _mockErrorHandler.Object, _mapper);
+            _handler = new CreateCampaignHandlerAsync(_mockCampaignWriteDao.Object, _mockErrorHandler.Object, _mapper, _mockRedisService.Object);
         }
 
         /// <summary>
@@ -49,22 +53,20 @@ namespace TicketProject.Tests.Commands.Handlers
                 Location = "Test Location",
                 CampaignDate = DateTime.UtcNow,
                 TicketContents =
-                [
-                    new CreateCampaign_TicketContentDto
                     {
-                        TypeName = "VIP",
-                        QuantityAvailable = 100,
-                        QuantitySold = 0,
-                        Price = 150.00m
-                    },
-                    new CreateCampaign_TicketContentDto
-                    {
-                        TypeName = "General",
-                        QuantityAvailable = 200,
-                        QuantitySold = 0,
-                        Price = 50.00m
+                        new CreateCampaign_TicketContentDto
+                        {
+                            TypeName = (TicketType)1,
+                            QuantityAvailable = 100,
+                            Price = 150.00m
+                        },
+                        new CreateCampaign_TicketContentDto
+                        {
+                            TypeName = (TicketType)2,
+                            QuantityAvailable = 200,
+                            Price = 50.00m
+                        }
                     }
-                ]
             };
 
             var campaign = new Campaign
@@ -75,9 +77,8 @@ namespace TicketProject.Tests.Commands.Handlers
                 CampaignDate = command.CampaignDate,
                 TicketContents = command.TicketContents.Select(tc => new TicketContent
                 {
-                    TypeName = tc.TypeName,
+                    TypeName = tc.TypeName.ToString(),
                     QuantityAvailable = tc.QuantityAvailable,
-                    QuantitySold = tc.QuantitySold,
                     Price = tc.Price
                 }).ToList()
             };
@@ -97,7 +98,6 @@ namespace TicketProject.Tests.Commands.Handlers
             {
                 Assert.Equal(command.TicketContents.ElementAt(i).TypeName, result.TicketContents.ElementAt(i).TypeName);
                 Assert.Equal(command.TicketContents.ElementAt(i).QuantityAvailable, result.TicketContents.ElementAt(i).QuantityAvailable);
-                Assert.Equal(command.TicketContents.ElementAt(i).QuantitySold, result.TicketContents.ElementAt(i).QuantitySold);
                 Assert.Equal(command.TicketContents.ElementAt(i).Price, result.TicketContents.ElementAt(i).Price);
             }
 
@@ -118,22 +118,20 @@ namespace TicketProject.Tests.Commands.Handlers
                 Location = "Test Location",
                 CampaignDate = DateTime.UtcNow,
                 TicketContents =
-                [
-                    new CreateCampaign_TicketContentDto
                     {
-                        TypeName = "VIP",
-                        QuantityAvailable = 100,
-                        QuantitySold = 0,
-                        Price = 150.00m
-                    },
-                    new CreateCampaign_TicketContentDto
-                    {
-                        TypeName = "General",
-                        QuantityAvailable = 200,
-                        QuantitySold = 0,
-                        Price = 50.00m
+                        new CreateCampaign_TicketContentDto
+                        {
+                            TypeName = (TicketType)1,
+                            QuantityAvailable = 100,
+                            Price = 150.00m
+                        },
+                        new CreateCampaign_TicketContentDto
+                        {
+                            TypeName = (TicketType)2,
+                            QuantityAvailable = 200,
+                            Price = 50.00m
+                        }
                     }
-                ]
             };
             var exception = new Exception("Test exception");
             _mockCampaignWriteDao.Setup(d => d.CreateCampaignAsync(It.IsAny<Campaign>())).ThrowsAsync(exception);
