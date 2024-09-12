@@ -29,6 +29,18 @@ namespace TicketProject.Tests.Querys.Handlers
             _handler = new GetCampaignHandlerAsync(_mockCampaignReadDao.Object, _mockErrorHandler.Object, _mockDynamicQueryBuilderService.Object);
         }
 
+        private void SetupMockCampaignReadDao(List<Campaign> campaigns)
+        {
+            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+                .ReturnsAsync(campaigns);
+        }
+
+        private void SetupMockDynamicQueryBuilderService()
+        {
+            _mockDynamicQueryBuilderService.Setup(d => d.BuildFilter(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+                .Returns<Expression<Func<Campaign, bool>>, Expression<Func<Campaign, bool>>, string>((current, newFilter, str) => newFilter);
+        }
+
         /// <summary>
         /// 測試 Handle 方法在沒有篩選條件時是否能正確返回所有活動。
         /// </summary>
@@ -38,9 +50,7 @@ namespace TicketProject.Tests.Querys.Handlers
             // Arrange
             var request = new GetCampaignQuery();
             var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
-
-            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
-                .ReturnsAsync(campaigns);
+            SetupMockCampaignReadDao(campaigns);
 
             // Act
             var result = await _handler.Handle(request, CancellationToken.None);
@@ -60,12 +70,8 @@ namespace TicketProject.Tests.Querys.Handlers
             // Arrange
             var request = new GetCampaignQuery { CampaignName = "Test Campaign" };
             var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
-
-            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
-                .ReturnsAsync(campaigns);
-
-            _mockDynamicQueryBuilderService.Setup(d => d.BuildFilter(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
-                .Returns<Expression<Func<Campaign, bool>>, Expression<Func<Campaign, bool>>, string>((current, newFilter, str) => newFilter);
+            SetupMockCampaignReadDao(campaigns);
+            SetupMockDynamicQueryBuilderService();
 
             // Act
             var result = await _handler.Handle(request, CancellationToken.None);

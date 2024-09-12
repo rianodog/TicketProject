@@ -30,6 +30,17 @@ namespace TicketProject.Tests.DAL.Implement
             _campaignReadDao = new CampaignReadDao(_mockDbContext.Object, _mockErrorHandler.Object, _mockRedisService.Object);
         }
 
+        private void SetupMockRedisService(List<Campaign>? cachedData, string cacheKey)
+        {
+            _mockRedisService.Setup(r => r.GetCacheAsync<List<Campaign>>(It.IsAny<string>()))
+                .ReturnsAsync(cachedData);
+        }
+
+        private void SetupMockDbContext(List<Campaign> dbData)
+        {
+            _mockDbContext.Setup(c => c.Campaigns).ReturnsDbSet(dbData);
+        }
+
         /// <summary>
         /// 測試 GetCampaignAsync 方法是否能從快取中返回資料。
         /// </summary>
@@ -39,9 +50,7 @@ namespace TicketProject.Tests.DAL.Implement
             // Arrange
             var cacheKey = "SampleCity";
             var cachedData = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
-
-            _mockRedisService.Setup(r => r.GetCacheAsync<List<Campaign>>(It.IsAny<string>()))
-                .ReturnsAsync(cachedData);
+            SetupMockRedisService(cachedData, cacheKey);
 
             // Act
             var result = await _campaignReadDao.GetCampaignAsync(c => c.CampaignName == "Test Campaign", cacheKey);
@@ -63,11 +72,8 @@ namespace TicketProject.Tests.DAL.Implement
             // Arrange
             var cacheKey = "SampleCity";
             var dbData = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
-
-            _mockRedisService.Setup(r => r.GetCacheAsync<List<Campaign>>(It.IsAny<string>()))
-                .ReturnsAsync((List<Campaign>?)null);
-
-            _mockDbContext.Setup(c => c.Campaigns).ReturnsDbSet(dbData);
+            SetupMockRedisService(null, cacheKey);
+            SetupMockDbContext(dbData);
 
             // Act
             var result = await _campaignReadDao.GetCampaignAsync(c => c.CampaignName == "Test Campaign", cacheKey);
@@ -89,8 +95,7 @@ namespace TicketProject.Tests.DAL.Implement
         {
             // Arrange
             var dbData = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
-
-            _mockDbContext.Setup(c => c.Campaigns).ReturnsDbSet(dbData);
+            SetupMockDbContext(dbData);
 
             // Act
             var result = await _campaignReadDao.GetCampaignAsync(c => c.CampaignName == "Test Campaign", string.Empty);

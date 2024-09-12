@@ -55,18 +55,5 @@ namespace TicketProject.Controllers
                 return Results.StatusCode(500);
             }
         }
-        [HttpGet("GetCampaigns")]
-        public async Task<IResult> GetCampaigns([FromQuery] GetCampaignQuery getCampaignQuery)
-        {
-            try
-            {
-                return Results.Ok(await _mediator.Send(getCampaignQuery));
-            }
-            catch (Exception e)
-            {
-                _errorHandler.HandleError(e);
-                return Results.StatusCode(500);
-            }
-        }
     }
 }

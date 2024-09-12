@@ -57,7 +57,8 @@ namespace TicketProject.Querys.Handlers
                 foreach (var f in filters)
                     filter = _dynamicQueryBuilderService.BuildFilter(filter, f);
 
-                string useCache = filters.Count == 1 && request.City != null ? request.City : "";
+                string useCache = filters.Count == 1 && request.City != null ? request.City
+                    : filters.Count == 0 ? "Campaigns" : "";
 
                 return await _campaignReadDao.GetCampaignAsync(filter, useCache);
             }

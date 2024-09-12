@@ -40,14 +40,17 @@ namespace TicketProject.DAL.Implement
             {
                 if (!String.IsNullOrEmpty(useCache))
                 {
-                    var result = await _redisService.GetCacheAsync<List<Campaign>>($"Campaigns:City:{useCache}");
+                    if (useCache != "Campaigns")
+                        useCache = $"Campaigns:City:{useCache}";
+
+                    var result = await _redisService.GetCacheAsync<List<Campaign>>(useCache);
 
                     if (result == null || result.Count == 0)
                     {
                         result = await _dbContext.Campaigns.Where(filter).ToListAsync();
 
                         if(result.Count != 0)
-                            await _redisService.SetCacheAsync($"Campaigns:City:{useCache}", result);
+                            await _redisService.SetCacheAsync(useCache, result);
                     }
                     return result;
                 }

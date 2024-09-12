@@ -14,6 +14,7 @@ namespace TicketProject.Commands.Handlers
         private readonly ICampaignWriteDao _campaignWriteDao;
         private readonly IErrorHandler<CreateCampaignHandlerAsync> _errorHandler;
         private readonly IMapper _mapper;
+        private readonly IRedisService _redisService;
 
         /// <summary>  
         /// 初始化 <see cref="CreateCampaignHandlerAsync"/> 類別的新執行個體。  
@@ -21,11 +22,12 @@ namespace TicketProject.Commands.Handlers
         /// <param name="campaignWriteDao">活動寫入 DAO。</param>  
         /// <param name="errorHandler">錯誤處理程式。</param>  
         /// <param name="mapper">映射程式。</param>  
-        public CreateCampaignHandlerAsync(ICampaignWriteDao campaignWriteDao, IErrorHandler<CreateCampaignHandlerAsync> errorHandler, IMapper mapper)
+        public CreateCampaignHandlerAsync(ICampaignWriteDao campaignWriteDao, IErrorHandler<CreateCampaignHandlerAsync> errorHandler, IMapper mapper, IRedisService redisService)
         {
             _campaignWriteDao = campaignWriteDao;
             _errorHandler = errorHandler;
             _mapper = mapper;
+            _redisService = redisService;
         }
 
         /// <summary>  
@@ -40,6 +42,7 @@ namespace TicketProject.Commands.Handlers
             {
                 var campaign = _mapper.Map<Campaign>(request);
                 var result =  await _campaignWriteDao.CreateCampaignAsync(campaign);
+                await _redisService.ClearCacheAsync("Campaigns");
                 return _mapper.Map<CreateCampaignCommand>(result);
             }
             catch (Exception e)

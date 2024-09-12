@@ -4,7 +4,6 @@ using TicketProject.AutoMapper;
 using TicketProject.Commands;
 using TicketProject.Commands.Handlers;
 using TicketProject.DAL.Interfaces;
-using TicketProject.Models;
 using TicketProject.Models.Dto;
 using TicketProject.Models.Entity;
 using TicketProject.Services.Interfaces;
@@ -39,14 +38,9 @@ namespace TicketProject.Tests.Commands.Handlers
             _handler = new CreateCampaignHandlerAsync(_mockCampaignWriteDao.Object, _mockErrorHandler.Object, _mapper, _mockRedisService.Object);
         }
 
-        /// <summary>
-        /// 測試 Handle 方法是否能成功建立活動並返回命令。
-        /// </summary>
-        [Fact]
-        public async Task Handle_ShouldCreateCampaignAndReturnCommand()
+        private CreateCampaignCommand CreateSampleCommand()
         {
-            // Arrange
-            var command = new CreateCampaignCommand
+            return new CreateCampaignCommand
             {
                 CampaignName = "Test Campaign",
                 Description = "Test Description",
@@ -68,8 +62,11 @@ namespace TicketProject.Tests.Commands.Handlers
                         }
                     }
             };
+        }
 
-            var campaign = new Campaign
+        private Campaign CreateSampleCampaign(CreateCampaignCommand command)
+        {
+            return new Campaign
             {
                 CampaignName = command.CampaignName,
                 Description = command.Description,
@@ -82,6 +79,17 @@ namespace TicketProject.Tests.Commands.Handlers
                     Price = tc.Price
                 }).ToList()
             };
+        }
+
+        /// <summary>
+        /// 測試 Handle 方法是否能成功建立活動並返回命令。
+        /// </summary>
+        [Fact]
+        public async Task Handle_ShouldCreateCampaignAndReturnCommand()
+        {
+            // Arrange
+            var command = CreateSampleCommand();
+            var campaign = CreateSampleCampaign(command);
 
             _mockCampaignWriteDao.Setup(d => d.CreateCampaignAsync(It.IsAny<Campaign>())).ReturnsAsync(campaign);
 
@@ -102,6 +110,7 @@ namespace TicketProject.Tests.Commands.Handlers
             }
 
             _mockCampaignWriteDao.Verify(d => d.CreateCampaignAsync(It.IsAny<Campaign>()), Times.Once);
+            _mockRedisService.Verify(r => r.ClearCacheAsync("Campaigns", false), Times.Once);
         }
 
         /// <summary>
@@ -111,28 +120,7 @@ namespace TicketProject.Tests.Commands.Handlers
         public async Task Handle_ShouldHandleException()
         {
             // Arrange
-            var command = new CreateCampaignCommand
-            {
-                CampaignName = "Test Campaign",
-                Description = "Test Description",
-                Location = "Test Location",
-                CampaignDate = DateTime.UtcNow,
-                TicketContents =
-                    {
-                        new CreateCampaign_TicketContentDto
-                        {
-                            TypeName = (TicketType)1,
-                            QuantityAvailable = 100,
-                            Price = 150.00m
-                        },
-                        new CreateCampaign_TicketContentDto
-                        {
-                            TypeName = (TicketType)2,
-                            QuantityAvailable = 200,
-                            Price = 50.00m
-                        }
-                    }
-            };
+            var command = CreateSampleCommand();
             var exception = new Exception("Test exception");
             _mockCampaignWriteDao.Setup(d => d.CreateCampaignAsync(It.IsAny<Campaign>())).ThrowsAsync(exception);
 

@@ -5,5 +5,6 @@
         void Initialize();
         Task<T?> GetCacheAsync<T>(string cacheKey);
         Task SetCacheAsync<T>(string cacheKey, T data, TimeSpan? expiration = null);
+        Task ClearCacheAsync(string cacheKey, bool pattern = false);
     }
 }

@@ -63,7 +63,7 @@ namespace TicketProject.Services.Implement
             catch (Exception e)
             {
                 _errorHandler.HandleError(e);
-                return default;
+                throw;
             }
         }
 
@@ -89,6 +89,30 @@ namespace TicketProject.Services.Implement
             catch (Exception e)
             {
                 _errorHandler.HandleError(e);
+                throw;
+            }
+        }
+
+        public async Task ClearCacheAsync(string cacheKey, bool pattern = false)
+        {
+            try
+            {
+                if (pattern)
+                {
+                    var server = _db!.Multiplexer.GetServer(_db.Multiplexer.GetEndPoints().First());
+                    var keys = server.Keys(pattern: cacheKey + "*");
+
+                    foreach (var key in keys)
+                        await _db.KeyDeleteAsync(key);
+
+                    return;
+                }
+                await _db!.KeyDeleteAsync(cacheKey);
+            }
+            catch (Exception e)
+            {
+                _errorHandler.HandleError(e);
+                throw;
             }
         }
     }
