@@ -29,7 +29,7 @@ namespace TicketProject.Controllers
         /// </summary>  
         /// <param name="createCampaignCommand">建立活動的命令。</param>  
         /// <returns>表示建立活動結果的介面。</returns>  
-        [HttpPost("CreateCampaign")]
+        [HttpPost]
         public async Task<IResult> CreateCampaign([FromBody] CreateCampaignCommand createCampaignCommand)
         {
             try
@@ -42,12 +42,25 @@ namespace TicketProject.Controllers
                 return Results.StatusCode(500);
             }
         }
-        [HttpGet("GetCampaign")]
-        public async Task<IResult> GetCampaign([FromQuery] GetCampaignQuery getCampaignQuery)
+        [HttpGet]
+        public async Task<IResult> GetCampaigns([FromQuery] GetCampaignsQuery getCampaignsQuery)
         {
             try
             {
-                return Results.Ok(await _mediator.Send(getCampaignQuery));
+                return Results.Ok(await _mediator.Send(getCampaignsQuery));
+            }
+            catch (Exception e)
+            {
+                _errorHandler.HandleError(e);
+                return Results.StatusCode(500);
+            }
+        }
+        [HttpGet("GetCampaignFormId")]
+        public async Task<IResult> GetCampaignFormId([FromQuery] GetCampaignFormIdQuery getCampaignsQuery)
+        {
+            try
+            {
+                return Results.Ok(await _mediator.Send(getCampaignsQuery));
             }
             catch (Exception e)
             {

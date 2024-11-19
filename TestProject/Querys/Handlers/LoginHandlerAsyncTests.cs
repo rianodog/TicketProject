@@ -51,7 +51,7 @@ namespace TicketProject.Tests.Querys.Handlers
             var hashedPassword = "hashedpassword";
             var user = new User { Email = "test@example.com", PasswordHash = hashedPassword };
 
-            _hashServiceMock.Setup(h => h.HashPassword("password")).ReturnsAsync(hashedPassword);
+            _hashServiceMock.Setup(h => h.VerifyPasswordBcrypt("password", hashedPassword)).ReturnsAsync(true);
             _userReadDaoMock.Setup(u => u.GetUserAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(user);
             _errorHandlerMock.Setup(e => e.HandleError(It.IsAny<Exception>()));
 
@@ -77,7 +77,7 @@ namespace TicketProject.Tests.Querys.Handlers
                 Password = "wrongpassword"
             };
 
-            _hashServiceMock.Setup(h => h.HashPassword("wrongpassword")).ReturnsAsync("wronghashedpassword");
+            _hashServiceMock.Setup(h => h.BcryptHashPassword("wrongpassword")).ReturnsAsync("wronghashedpassword");
             _userReadDaoMock.Setup(u => u.GetUserAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync((User?)null);
             _errorHandlerMock.Setup(e => e.HandleError(It.IsAny<Exception>()));
 
@@ -103,7 +103,7 @@ namespace TicketProject.Tests.Querys.Handlers
             };
 
             var exception = new Exception("Test exception");
-            _hashServiceMock.Setup(h => h.HashPassword("password"));
+            _hashServiceMock.Setup(h => h.BcryptHashPassword("password"));
             _userReadDaoMock.Setup(u => u.GetUserAsync(It.IsAny<Expression<Func<User, bool>>>())).ThrowsAsync(exception);
             _errorHandlerMock.Setup(e => e.HandleError(It.IsAny<Exception>()));
 

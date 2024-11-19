@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using TicketProject.DAL.Interfaces;
 using TicketProject.Models.Entity;
-using TicketProject.Services.Implement;
 using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Querys.Handlers
@@ -37,10 +36,10 @@ namespace TicketProject.Querys.Handlers
         {
             try
             {
-                var passwordHash = await _hashService.HashPassword(request.Password);
-                var user = await _userReadDao.GetUserAsync(u => (u.Email == request.Account || u.PhoneNumber == request.Account)
-                    && u.PasswordHash == passwordHash);
-                return user ?? null;
+                var user = await _userReadDao.GetUserAsync(u => u.Email == request.Account || u.PhoneNumber == request.Account);
+                if (user == null) return null;
+
+                return await _hashService.VerifyPasswordBcrypt(request.Password, user.PasswordHash) ? user : null;
             }
             catch (Exception e)
             {

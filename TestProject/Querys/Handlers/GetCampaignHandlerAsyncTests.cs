@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Moq;
 using TicketProject.DAL.Interfaces;
+using TicketProject.Models.Dto;
 using TicketProject.Models.Entity;
 using TicketProject.Querys;
 using TicketProject.Querys.Handlers;
@@ -9,14 +10,14 @@ using TicketProject.Services.Interfaces;
 namespace TicketProject.Tests.Querys.Handlers
 {
     /// <summary>
-    /// GetCampaignHandlerAsync 的單元測試類別。
+    /// GetCampaignFormIdHandlerAsync 的單元測試類別。
     /// </summary>
     public class GetCampaignHandlerAsyncTests
     {
         private readonly Mock<ICampaignReadDao> _mockCampaignReadDao;
         private readonly Mock<IDynamicQueryBuilderService<Campaign>> _mockDynamicQueryBuilderService;
-        private readonly Mock<IErrorHandler<GetCampaignHandlerAsync>> _mockErrorHandler;
-        private readonly GetCampaignHandlerAsync _handler;
+        private readonly Mock<IErrorHandler<GetCampaignsHandlerAsync>> _mockErrorHandler;
+        private readonly GetCampaignsHandlerAsync _handler;
 
         /// <summary>
         /// 初始化 GetCampaignHandlerAsyncTests 類別的新實例。
@@ -25,13 +26,13 @@ namespace TicketProject.Tests.Querys.Handlers
         {
             _mockCampaignReadDao = new Mock<ICampaignReadDao>();
             _mockDynamicQueryBuilderService = new Mock<IDynamicQueryBuilderService<Campaign>>();
-            _mockErrorHandler = new Mock<IErrorHandler<GetCampaignHandlerAsync>>();
-            _handler = new GetCampaignHandlerAsync(_mockCampaignReadDao.Object, _mockErrorHandler.Object, _mockDynamicQueryBuilderService.Object);
+            _mockErrorHandler = new Mock<IErrorHandler<GetCampaignsHandlerAsync>>();
+            _handler = new GetCampaignsHandlerAsync(_mockCampaignReadDao.Object, _mockErrorHandler.Object, _mockDynamicQueryBuilderService.Object);
         }
 
-        private void SetupMockCampaignReadDao(List<Campaign> campaigns)
+        private void SetupMockCampaignReadDao(List<CampaignDto> campaigns)
         {
-            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+            _mockCampaignReadDao.Setup(d => d.GetCampaignsAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
                 .ReturnsAsync(campaigns);
         }
 
@@ -48,8 +49,8 @@ namespace TicketProject.Tests.Querys.Handlers
         public async Task Handle_ShouldReturnAllCampaigns_WhenNoFiltersProvided()
         {
             // Arrange
-            var request = new GetCampaignQuery();
-            var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
+            var request = new GetCampaignsQuery();
+            var campaigns = new List<CampaignDto> { new CampaignDto { CampaignName = "Test Campaign" } };
             SetupMockCampaignReadDao(campaigns);
 
             // Act
@@ -68,8 +69,8 @@ namespace TicketProject.Tests.Querys.Handlers
         public async Task Handle_ShouldReturnFilteredCampaigns_WhenFiltersProvided()
         {
             // Arrange
-            var request = new GetCampaignQuery { CampaignName = "Test Campaign" };
-            var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
+            var request = new GetCampaignsQuery { CampaignName = "Test Campaign" };
+            var campaigns = new List<CampaignDto> { new CampaignDto { CampaignName = "Test Campaign" } };
             SetupMockCampaignReadDao(campaigns);
             SetupMockDynamicQueryBuilderService();
 
@@ -89,10 +90,10 @@ namespace TicketProject.Tests.Querys.Handlers
         public async Task Handle_ShouldUseCache_WhenCityFilterProvided()
         {
             // Arrange
-            var request = new GetCampaignQuery { City = "SampleCity" };
-            var campaigns = new List<Campaign> { new Campaign { CampaignId = 1, CampaignName = "Test Campaign" } };
+            var request = new GetCampaignsQuery { City = "SampleCity" };
+            var campaigns = new List<CampaignDto> { new CampaignDto { CampaignName = "Test Campaign" } };
 
-            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), "SampleCity"))
+            _mockCampaignReadDao.Setup(d => d.GetCampaignsAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), "SampleCity"))
                 .ReturnsAsync(campaigns);
 
             // Act
@@ -111,10 +112,10 @@ namespace TicketProject.Tests.Querys.Handlers
         public async Task Handle_ShouldHandleError_WhenExceptionThrown()
         {
             // Arrange
-            var request = new GetCampaignQuery();
+            var request = new GetCampaignsQuery();
             var exception = new Exception("Test exception");
 
-            _mockCampaignReadDao.Setup(d => d.GetCampaignAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
+            _mockCampaignReadDao.Setup(d => d.GetCampaignsAsync(It.IsAny<Expression<Func<Campaign, bool>>>(), It.IsAny<string>()))
                 .ThrowsAsync(exception);
 
             // Act & Assert

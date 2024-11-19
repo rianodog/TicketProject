@@ -48,8 +48,15 @@ namespace TicketProject.Services
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
-            services.AddTransient<IRedisServiceFactory, RedisServiceFactory>();
+            // Singleton
+            services.AddSingleton<IRedisServiceFactory, RedisServiceFactory>();
+            services.AddSingleton<IRabbitMQServiceFactory, RabbitMQServiceFactory>();
+            services.AddSingleton(serviesProvider => serviesProvider.GetRequiredService<IRabbitMQServiceFactory>().Create());
             services.AddSingleton(serviesProvider => serviesProvider.GetRequiredService<IRedisServiceFactory>().Create());
+            services.AddSingleton<ITicketService, TicketService>();
+
+            // Force to initialize services
+            services.AddHostedService<InitializeServicesHostedService>();
 
             // 泛型服務註冊方式
             services.AddTransient(typeof(IErrorHandler<>), typeof(ErrorHandler<>));
@@ -59,10 +66,16 @@ namespace TicketProject.Services
             services.AddTransient<IUserReadDao, UserReadDao>();
             services.AddTransient<ICampaignWriteDao, CampaignWriteDao>();
             services.AddTransient<ICampaignReadDao, CampaignReadDao>();
+            services.AddTransient<ITicketContentWriteDao, TicketContentWriteDao>();
+            services.AddTransient<ITicketContentReadDao, TicketContentReadDao>();
+            services.AddTransient<IOrderWriteDao, OrderWriteDao>();
+            services.AddTransient<ITicketWriteDao, TicketWriteDao>();
+
 
             services.AddTransient<IJWTService, JWTService>();
             services.AddTransient<IHashService, HashService>();
             services.AddTransient<IRetryService, RetryService>();
+
 
         }
     }

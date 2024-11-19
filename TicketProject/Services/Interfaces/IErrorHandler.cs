@@ -6,6 +6,8 @@
     /// <typeparam name="T">處理錯誤的類型。</typeparam>
     public interface IErrorHandler<T>
     {
+        void Debug(string message);
+
         /// <summary>
         /// 處理錯誤的方法。
         /// </summary>

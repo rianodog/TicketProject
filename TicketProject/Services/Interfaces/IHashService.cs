@@ -2,6 +2,7 @@
 {
     public interface IHashService
     {
-        Task<string> HashPassword(string password);
+        Task<string> BcryptHashPassword(string password);
+        Task<bool> VerifyPasswordBcrypt(string password, string hashedPassword);
     }
 }

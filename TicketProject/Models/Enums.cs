@@ -7,11 +7,20 @@
             Admin,
             User
         }
+
         public enum TicketType
         {
             Normal,
             VIP
         }
+
+        public enum ResultStatus
+        {
+            Success,
+            Sold_out,
+            Error
+        }
+
         public enum City
         {
             台北,

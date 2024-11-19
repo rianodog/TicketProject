@@ -1,10 +1,11 @@
 ﻿using MediatR;
-using TicketProject.Models.Entity;
+using TicketProject.Models.Dto;
 
 namespace TicketProject.Querys
 {
-    public class GetCampaignQuery : IRequest<ICollection<Campaign>>
+    public class GetCampaignsQuery : IRequest<ICollection<CampaignDto>>
     {
+        public int CampaignId { get; set; }
         public string? CampaignName { get; set; }
         public string? City { get; set; }
         public string? Location { get; set; }

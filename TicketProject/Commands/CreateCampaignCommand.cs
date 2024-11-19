@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using System.ComponentModel.DataAnnotations;
 using TicketProject.Models.Dto;
+using TicketProject.Models.Dto.CreateCampaignCommand;
 using static TicketProject.Models.Enums;
 
 namespace TicketProject.Commands
@@ -19,6 +20,6 @@ namespace TicketProject.Commands
         [Required]
         public DateTime CampaignDate { get; set; }
         [Required]
-        public ICollection<CreateCampaign_TicketContentDto> TicketContents { get; set; } = [];
+        public ICollection<ValidTicketContentDto> TicketContents { get; set; } = [];
     }
 }

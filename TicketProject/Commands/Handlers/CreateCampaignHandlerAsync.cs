@@ -42,7 +42,7 @@ namespace TicketProject.Commands.Handlers
             {
                 var campaign = _mapper.Map<Campaign>(request);
                 var result =  await _campaignWriteDao.CreateCampaignAsync(campaign);
-                await _redisService.ClearCacheAsync("Campaigns");
+                await _redisService.ClearCacheAsync("Campaign", true);
                 return _mapper.Map<CreateCampaignCommand>(result);
             }
             catch (Exception e)

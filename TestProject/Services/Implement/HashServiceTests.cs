@@ -22,33 +22,32 @@ namespace TicketProject.Tests.Services.Implement
         }
 
         /// <summary>
-        /// 測試 HashPassword 方法是否能正確返回雜湊後的密碼。
+        /// 測試 BcryptHashPassword 方法是否能正確返回雜湊後的密碼。
         /// </summary>
         [Fact]
-        public async Task HashPassword_ShouldReturnHashedPassword()
+        public async Task BcryptHashPassword_ShouldReturnHashedPassword()
         {
             // Arrange
             var password = "TestPassword";
-            var expectedHash = "7bcf9d89298f1bfae16fa02ed6b61908fd2fa8de45dd8e2153a3c47300765328";
 
             // Act
-            var result = await _hashService.HashPassword(password);
+            var result = await _hashService.BcryptHashPassword(password);
 
             // Assert
-            Assert.Equal(expectedHash, result);
+            Assert.True(BCrypt.Net.BCrypt.Verify(password, result));
         }
 
         /// <summary>
-        /// 測試 HashPassword 方法在發生例外時是否能正確處理錯誤。
+        /// 測試 BcryptHashPassword 方法在發生例外時是否能正確處理錯誤。
         /// </summary>
         [Fact]
-        public async Task HashPassword_ShouldHandleException()
+        public async Task BcryptHashPassword_ShouldHandleException()
         {
             // Arrange
             _mockErrorHandler.Setup(e => e.HandleError(It.IsAny<Exception>())).Verifiable();
 
             // Act
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _hashService.HashPassword(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _hashService.BcryptHashPassword(null!));
 
             // Assert
             _mockErrorHandler.Verify(e => e.HandleError(It.IsAny<Exception>()), Times.Once);

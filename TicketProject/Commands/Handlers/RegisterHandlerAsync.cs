@@ -41,7 +41,7 @@ namespace TicketProject.Commands.Handlers
         {
             try
             {
-                request.PasswordHash = await _hashService.HashPassword(request.PasswordHash!);
+                request.PasswordHash = await _hashService.BcryptHashPassword(request.PasswordHash!);
                 var user = _mapper.Map<User>(request);
                 return await _UserWriteDao.AddUserAsync(user);
             }

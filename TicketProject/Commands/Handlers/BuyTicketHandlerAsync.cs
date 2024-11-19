@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using MediatR;
-using System.Diagnostics;
 using System.Text.Json;
-using TicketProject.DAL.Interfaces;
 using TicketProject.Models.Dto;
+using TicketProject.Models.Dto.ButTicket;
+using TicketProject.Models.Dto.BuyTicketHandlerAsync;
 using TicketProject.Models.Dto.TicketService;
 using TicketProject.Services.Interfaces;
 using static TicketProject.Models.Enums;
@@ -13,93 +14,127 @@ namespace TicketProject.Commands.Handlers
     public class BuyTicketHandlerAsync : IRequestHandler<BuyTicketCommand, bool>
     {
         private readonly IRedisService _redisService;
-        private readonly IRetryService _retryService;
         private readonly IRabbitMQService _rabbitMQService;
-        private readonly ITicketService _ticketService;
         private readonly IErrorHandler<BuyTicketHandlerAsync> _errorHandler;
-        private readonly ICampaignReadDao _campaignReadDao;
         private readonly IMapper _mapper;
         private readonly string _exchange = "ticket_exchange";
         private readonly string _routekey = "ticket_routekey";
-        private string _getCampaignKey = string.Empty;
+        private readonly string _buyTicketLuaScript = @"
+                    -- KEYS[1]: Campaign key
+                    -- ARGV[1]: BuyList JSON
+                    -- ARGV[2]: Timestamp
 
-        public BuyTicketHandlerAsync(IRedisService redisService, IRetryService retryService,
-            ITicketService ticketService, IRabbitMQService rabbitMQService,
+                    local campaignKey = KEYS[1]
+                    local buyListTable = cjson.decode(ARGV[1])
+                    local timestamp = ARGV[2]
+
+                    local campaignJson = redis.call('JSON.GET', campaignKey)
+                    if not campaignJson then
+                        return cjson.encode({ Status = 'Error', Result = 'Cmapaign_NotFound' })
+                    end
+                    local campaign = cjson.decode(campaignJson)
+
+                    for _, buyItem in ipairs(buyListTable) do
+
+                        local typeName = buyItem.TypeName
+                        local quantity = buyItem.Quantity
+                        local ticketFound = false
+                        
+
+                        for i, ticket in ipairs(campaign.TicketContents) do
+                            if ticket.TypeName == typeName then
+                                ticketFound = true
+                                if ticket.QuantityAvailable < quantity then
+                                    return cjson.encode({ Status = 'Sold_out'})
+                                end
+                                break
+                            end
+                        end
+                        if not ticketFound then
+                            return cjson.encode({ Status = 'Error', Result = 'TicketType_NotFound' })
+                        end
+                    end
+
+                    for _, buyItem in ipairs(buyListTable) do
+                        local typeName = buyItem.TypeName
+                        local quantity = buyItem.Quantity
+                        for i, ticket in ipairs(campaign.TicketContents) do
+                            if ticket.TypeName == typeName then
+                                campaign.TicketContents[i].QuantityAvailable = campaign.TicketContents[i].QuantityAvailable - quantity
+                                campaign.TicketContents[i].QuantitySold = campaign.TicketContents[i].QuantitySold + quantity
+                                campaign.TicketContents[i].UpdateAt = timestamp
+                                break
+                            end
+                        end
+                    end
+
+                    local updatedCampaignJson = cjson.encode(campaign)
+
+                    -- 為了排除Lua內只有Table導致Json解析後空陣列會變為物件的問題，將Tickets和OrderItems強制設為空陣列
+                    updatedCampaignJson = string.gsub(updatedCampaignJson, 'Tickets\"":{}', 'Tickets\"":[]')
+                    updatedCampaignJson = string.gsub(updatedCampaignJson, 'OrderItems\"":{}', 'OrderItems\"":[]')
+                    
+                    redis.log(redis.LOG_DEBUG, cjson.encode({ Status = 'Success', Result = updatedCampaignJson }))
+
+                    redis.call('JSON.SET', campaignKey, '.', updatedCampaignJson)
+
+                    -- redis.call('JSON.SET', campaignKey, '.TicketContents[*].Tickets', '[]')
+                    -- redis.call('JSON.SET', campaignKey, '.TicketContents[*].OrderItems', '[]')
+    
+                    return cjson.encode({ Status = 'Success', Result = updatedCampaignJson })
+
+                ";
+
+        public BuyTicketHandlerAsync(IRedisService redisService,
+            IRabbitMQService rabbitMQService,
             IErrorHandler<BuyTicketHandlerAsync> errorHandler,
-            IMapper mapper, ICampaignReadDao campaignReadDao)
+            IMapper mapper)
         {
             _redisService = redisService;
-            _retryService = retryService;
-            _ticketService = ticketService;
             _rabbitMQService = rabbitMQService;
             _errorHandler = errorHandler;
             _mapper = mapper;
-            _campaignReadDao = campaignReadDao;
         }
 
         public async Task<bool> Handle(BuyTicketCommand request, CancellationToken cancellationToken)
         {
-            var inserToQueueLockKey = $"Campaign:lock:{request.CampaignId}";
-            _getCampaignKey = $"Campaign:Id:{request.CampaignId}";
-            var lockTokenSource = new CancellationTokenSource();
             try
             {
-                // 將沒有競爭隱患的邏輯移至取鎖之前 避免佔用鎖
-                var campaign = await GetCampaignCache() ?? await GetCampaignFromDb(request.CampaignId);
-                var ticketContents = campaign.TicketContents.ToList();
-                var tickeType_QuantityDict = request.BuyList.ToDictionary(i => i.TicketType, i => i.Quantity);
-                var ticketContentDict = ticketContents.ToDictionary(t => t.TypeName);
+                var luaResult = await ExcuteLuaSctipt(request);
 
-                if (!CheckTicketCount(ticketContentDict, tickeType_QuantityDict))
-                    return false;
-
-                var order = new OrderDto
+                // 以下區塊統計消耗的時間低到可忽略不計
+                //var stopwatch = Stopwatch.StartNew();
+                if (luaResult.Status == ResultStatus.Success)
                 {
-                    UserId = int.Parse(request.UserId),
-                    OrderDate = DateTime.UtcNow
-                };
-                var updateTicketContentDtos = new List<UpdateTicketContentDto>();
+                    var updatedCampaign = JsonSerializer.Deserialize<CampaignDto>(luaResult.Result);
+                    var updateTicketContentDtos = new List<UpdateTicketContentDto>();
 
-                var stopwatch1 = Stopwatch.StartNew();
-                var insertToQueueLock = await TryGetLockWithRetryAsync(inserToQueueLockKey, TimeSpan.FromMilliseconds(100), 100, 10);
-                stopwatch1.Stop();
-                _errorHandler.Debug($"TryGetLock: User={request.UserId} Time={stopwatch1.ElapsedMilliseconds}ms");
-
-                if (insertToQueueLock)
-                {
-                    var stopwatch3 = Stopwatch.StartNew();
-                    var extensionLockTask = _redisService.StartLockExtensionTaskAsync(inserToQueueLockKey, TimeSpan.FromMilliseconds(50), 10, lockTokenSource);
-                    try
+                    var order = new OrderDto
                     {
-                        // 取得鎖後重取快取檢查 避免進入重試區塊後 上個取的鎖的執行序已變更數量
-                        if (!HandleBuyList(request, ticketContents, ref order, ref updateTicketContentDtos))
-                            return false;
+                        UserId = int.Parse(request.UserId),
+                        OrderDate = DateTime.UtcNow,
+                        OrderItems = []
+                    };
 
-                        // 寫入Redis的快取需統一格式
-                        var campaigns = new[] { await GetCampaignCache() };
-
-                        // 只更新Redis的可用票數 不更新DB以提升吞吐量，持久化更新由Service批量處理
-                        await _redisService.SetJsonCacheAsync(_getCampaignKey, campaigns, TimeSpan.FromMinutes(5));
-                        lockTokenSource.Cancel();
-                    }
-                    finally
-                    {
-                        await _redisService.ReleaseLockAsync(inserToQueueLockKey);
-                        stopwatch3.Stop();
-                        _errorHandler.Debug($"ReleaseLock: User={request.UserId} Time={stopwatch3.ElapsedMilliseconds}ms");
-                    }
+                    // 構建訂單和更新 DTO
+                    if (!HandleBuyList(request, updatedCampaign!.TicketContents.ToList(), ref order, ref updateTicketContentDtos))
+                        return false;
 
                     var insertDataDto = new InsertDataDto
                     {
                         Order = _mapper.Map<OrderDto>(order),
                         UpdateTicketContentDtos = updateTicketContentDtos
                     };
-
                     // 將資料整理插入Queue待批次處理
-                    _rabbitMQService.PublishMessage(_exchange, JsonSerializer.Serialize(_mapper.Map<InsertDataDto>(insertDataDto)), _routekey);
+                    await _rabbitMQService.PublishMessage(_exchange, JsonSerializer.Serialize(insertDataDto), _routekey);
+                    //stopwatch.Stop();
+                    //_errorHandler.Debug($"{stopwatch.ElapsedMilliseconds}");
                     return true;
                 }
-                return false;
+                else if (luaResult.Status == ResultStatus.Sold_out)
+                    return false;
+                else
+                    throw new Exception($"Lua Script Error: {luaResult.Result}");
             }
             catch (Exception e)
             {
@@ -108,42 +143,13 @@ namespace TicketProject.Commands.Handlers
             }
         }
 
-        private async Task<CampaignDto?> GetCampaignCache()
+        private async Task<LuaResultDto> ExcuteLuaSctipt(BuyTicketCommand request)
         {
-            var campaign = await _redisService.GetJsonCacheAsync<ICollection<CampaignDto>>(_getCampaignKey);
-            return campaign?.FirstOrDefault();
-        }
-
-        private async Task<CampaignDto> GetCampaignFromDb(int campaignId)
-        {
-            var getDbLockKey = $"Campaign:DbLock:{campaignId}";
-            var getDbLock = await _redisService.TryGetLockAsync(getDbLockKey, TimeSpan.FromMinutes(3));
-            if (getDbLock)
-            {
-                return (await _campaignReadDao.GetCampaignAsync(i => i.CampaignId == campaignId, _getCampaignKey)).First();
-            }
-            else
-            {
-                return await RetryGetCampaignCacheAsync();
-            }
-        }
-
-        private async Task<CampaignDto> RetryGetCampaignCacheAsync()
-        {
-            CampaignDto? campaign = null;
-            await _retryService.RetryAsync(async () =>
-            {
-                campaign = await GetCampaignCache();
-                return campaign != null;
-            }, 100, 10);
-            return campaign!;
-        }
-
-        private static bool CheckTicketCount(Dictionary<TicketType, TicketContentDto> ticketContentDict, Dictionary<TicketType, int> tickeType_QuantityDict)
-        {
-            return tickeType_QuantityDict.All(item =>
-                ticketContentDict.TryGetValue(item.Key, out var ticketContent) && ticketContent.QuantityAvailable >= item.Value
-            );
+            var keys = new[] { $"Campaign:Id:{request.CampaignId}" };
+            var buyListJson = JsonSerializer.Serialize(request.BuyList);
+            var args = new[] { buyListJson, DateTime.UtcNow.ToString("o") };
+            var lusResultJson = await _redisService.ExecuteLuaScriptAsync(_buyTicketLuaScript, keys, args);
+            return JsonSerializer.Deserialize<LuaResultDto>(lusResultJson)!;
         }
 
         private static bool HandleBuyList(BuyTicketCommand request, List<TicketContentDto> ticketContents,
@@ -151,16 +157,9 @@ namespace TicketProject.Commands.Handlers
         {
             foreach (var item in request.BuyList)
             {
-                var ticketContent = ticketContents.First(t => t.TypeName == item.TicketType);
+                var ticketContent = ticketContents.First(t => t.TypeName == item.TypeName);
 
-                ticketContent.QuantityAvailable -= item.Quantity;
-                ticketContent.QuantitySold += item.Quantity;
-                ticketContent.UpdateAt = DateTime.UtcNow;
-
-                // 再次檢查 避免進入前的數量判斷延遲
-                if (ticketContent.QuantityAvailable < 0)
-                    return false;
-
+                // 此處已經在 Lua 腳本中扣減了數量，所以直接更新 Order 和 UpdateTicketContentDtos
                 updateTicketContentDtos.Add(new UpdateTicketContentDto
                 {
                     TicketContentDto = ticketContent,
@@ -181,17 +180,6 @@ namespace TicketProject.Commands.Handlers
                 });
             }
             return true;
-        }
-
-        private async Task<bool> TryGetLockWithRetryAsync(string lockKey, TimeSpan lockTimeout, int retryCount, int retryDelay)
-        {
-            var insertToQueueLock = false;
-            await _retryService.RetryAsync(async () =>
-            {
-                insertToQueueLock = await _redisService.TryGetLockAsync(lockKey, lockTimeout);
-                return insertToQueueLock;
-            }, retryCount, retryDelay);
-            return insertToQueueLock;
         }
     }
 }

@@ -41,15 +41,15 @@ namespace TicketProject.Services.Implement
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = GenerateClaims(user),
-                    Expires = DateTime.Now.AddHours(1),
+                    Expires = DateTime.UtcNow.AddHours(1),
                     SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
                 };
 
                 // 產生短期和長期的 JWT 令牌
                 var shortToken = tokenHandler.CreateToken(tokenDescriptor);
-                tokenDescriptor.Expires = DateTime.Now.AddDays(7);
+                tokenDescriptor.Expires = DateTime.UtcNow.AddDays(7);
                 var longToken = tokenHandler.CreateToken(tokenDescriptor);
-                return new[] { tokenHandler.WriteToken(shortToken), tokenHandler.WriteToken(longToken) };
+                return [tokenHandler.WriteToken(shortToken), tokenHandler.WriteToken(longToken)];
             }
             catch (Exception e)
             {

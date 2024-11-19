@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using TicketProject.Services.Interfaces;
+﻿using TicketProject.Services.Interfaces;
 
 namespace TicketProject.Services.Implement
 {
@@ -22,18 +20,24 @@ namespace TicketProject.Services.Implement
         /// <param name="password">要雜湊的密碼。</param>  
         /// <returns>雜湊後的密碼字串。</returns>  
         /// <exception cref="Exception">當雜湊過程中發生錯誤時拋出。</exception>  
-        public async Task<string> HashPassword(string password)
+        public async Task<string> BcryptHashPassword(string password)
         {
             try
             {
-                using var stream = new MemoryStream(Encoding.UTF8.GetBytes(password));
-                var bytes = await SHA256.HashDataAsync(stream);
-                var builder = new StringBuilder();
-                foreach (var b in bytes)
-                {
-                    builder.Append(b.ToString("x2"));
-                }
-                return builder.ToString();
+                return await Task.Run(() => BCrypt.Net.BCrypt.HashPassword(password));
+            }
+            catch (Exception e)
+            {
+                _errorHandler.HandleError(e);
+                throw;
+            }
+        }
+
+        public async Task<bool> VerifyPasswordBcrypt(string password, string hashedPassword)
+        {
+            try
+            {
+                return await Task.Run(() => BCrypt.Net.BCrypt.Verify(password, hashedPassword));
             }
             catch (Exception e)
             {

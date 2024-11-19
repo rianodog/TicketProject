@@ -31,5 +31,10 @@ namespace TicketProject.Services.Implement
                 _logger.LogError(e.ToString());
             }
         }
+
+        public void Debug(string message)
+        {
+            _logger.LogDebug(message);
+        }
     }
 }

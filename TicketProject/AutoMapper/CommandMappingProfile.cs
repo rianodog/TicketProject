@@ -23,15 +23,9 @@ namespace TicketProject.AutoMapper
                 .ReverseMap()
                 .ForMember(dest => dest.City, opt => opt.MapFrom(src => Enum.Parse<City>(src.City)))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            // Campaign在對應時遇到子物件若有符合的規則也會自動套用，將Dto轉為Entity
-            CreateMap<CreateCampaign_TicketContentDto, TicketContent>()
-                .ForMember(dest => dest.TypeName, opt => opt.MapFrom(src => src.TypeName.ToString()))
-                .ReverseMap()
-                .ForMember(dest => dest.TypeName, opt => opt.MapFrom(src => Enum.Parse<TicketType>(src.TypeName)))
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // GetCampaignsHandller
-            CreateMap<GetCampaignQuery, Campaign>()
+            CreateMap<GetCampaignsQuery, Campaign>()
                 .ReverseMap()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 

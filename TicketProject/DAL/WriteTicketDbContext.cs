@@ -55,12 +55,7 @@ public partial class WriteTicketDbContext : DbContext
             entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF369A4DF3");
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.OrderDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .IsUnicode(false);
+            entity.Property(e => e.OrderDate).HasColumnType("datetime");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("UserID");
@@ -113,7 +108,7 @@ public partial class WriteTicketDbContext : DbContext
             entity.HasKey(e => e.TicketId).HasName("PK__Tickets__712CC627E4915567");
 
             entity.Property(e => e.TicketId)
-                .ValueGeneratedOnAdd()
+                .ValueGeneratedNever()
                 .HasColumnName("TicketID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")

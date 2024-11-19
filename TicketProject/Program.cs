@@ -6,6 +6,14 @@ namespace TicketProject
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxConcurrentConnections = 5000; // 設定為所需的數量
+                options.Limits.MaxRequestBodySize = null; // 無限制或設置適當大小
+            });
+
+            ThreadPool.SetMaxThreads(500, 500); // 設定為所需的數量
+
             // Add services to the container.
             Services.ServiceCollectionExtensions.AddTicketServices(builder.Services, builder.Configuration);
 

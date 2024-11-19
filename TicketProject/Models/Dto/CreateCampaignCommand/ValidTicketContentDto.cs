@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using static TicketProject.Models.Enums;
 
-namespace TicketProject.Models.Dto
+namespace TicketProject.Models.Dto.CreateCampaignCommand
 {
-    public class CreateCampaign_TicketContentDto
+    public class ValidTicketContentDto
     {
         [Required]
         [Range(0, 1, ErrorMessage = "票券類型欄位格式錯誤")]

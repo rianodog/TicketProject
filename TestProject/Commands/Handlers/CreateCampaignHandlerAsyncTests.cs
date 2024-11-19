@@ -5,6 +5,7 @@ using TicketProject.Commands;
 using TicketProject.Commands.Handlers;
 using TicketProject.DAL.Interfaces;
 using TicketProject.Models.Dto;
+using TicketProject.Models.Dto.CreateCampaignCommand;
 using TicketProject.Models.Entity;
 using TicketProject.Services.Interfaces;
 using static TicketProject.Models.Enums;
@@ -32,7 +33,7 @@ namespace TicketProject.Tests.Commands.Handlers
             _mockRedisService = new Mock<IRedisService>();
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.AddProfile<CommandMappingProfile>();
+                cfg.AddProfile<DtoMappingProfile>();
             });
             _mapper = config.CreateMapper();
             _handler = new CreateCampaignHandlerAsync(_mockCampaignWriteDao.Object, _mockErrorHandler.Object, _mapper, _mockRedisService.Object);
@@ -46,17 +47,17 @@ namespace TicketProject.Tests.Commands.Handlers
                 Description = "Test Description",
                 Location = "Test Location",
                 CampaignDate = DateTime.UtcNow,
-                TicketContents =
+                TicketContents = new List<ValidTicketContentDto>
                     {
-                        new CreateCampaign_TicketContentDto
+                        new ValidTicketContentDto
                         {
-                            TypeName = (TicketType)1,
+                            TypeName = TicketType.Normal,
                             QuantityAvailable = 100,
-                            Price = 150.00m
+                            Price = 100.00m
                         },
-                        new CreateCampaign_TicketContentDto
+                        new ValidTicketContentDto
                         {
-                            TypeName = (TicketType)2,
+                            TypeName = TicketType.VIP,
                             QuantityAvailable = 200,
                             Price = 50.00m
                         }
@@ -110,7 +111,7 @@ namespace TicketProject.Tests.Commands.Handlers
             }
 
             _mockCampaignWriteDao.Verify(d => d.CreateCampaignAsync(It.IsAny<Campaign>()), Times.Once);
-            _mockRedisService.Verify(r => r.ClearCacheAsync("Campaigns", false), Times.Once);
+            _mockRedisService.Verify(r => r.ClearCacheAsync("Campaign", true), Times.Once);
         }
 
         /// <summary>
