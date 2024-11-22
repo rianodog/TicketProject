@@ -53,7 +53,7 @@ namespace TicketProject.DAL.Implement
                             await _dbContext.Campaigns.Include(c => c.TicketContents).Where(filter).ToListAsync());
                         
                         if(result.Count != 0)
-                            await _redisService.SetJsonCacheAsync(useCache, result, TimeSpan.FromMinutes(5));
+                            await _redisService.SetJsonCacheAsync(useCache, result, TimeSpan.FromMinutes(10));
                     }
                     return _mapper.Map<ICollection<CampaignDto>>(result);
                 }
@@ -78,7 +78,7 @@ namespace TicketProject.DAL.Implement
                         await _dbContext.Campaigns.Include(c => c.TicketContents).FirstOrDefaultAsync(c => c.CampaignId == id));
 
                     if (result != null)
-                        await _redisService.SetJsonCacheAsync($"Campaign:Id:{id}", result, TimeSpan.FromMinutes(5));
+                        await _redisService.SetJsonCacheAsync($"Campaign:Id:{id}", result, TimeSpan.FromMinutes(10));
                 }
                 return result!;
             }

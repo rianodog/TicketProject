@@ -19,8 +19,8 @@ namespace TicketProject.Services.Implement
         private readonly IMapper _mapper;
         private readonly IServiceProvider _serviceProvider;
 
-        private readonly int _batchSize = 100;
-        private readonly TimeSpan _batchInterval = TimeSpan.FromSeconds(3);
+        private readonly int _batchSize = 1000;
+        private readonly TimeSpan _batchInterval = TimeSpan.FromSeconds(30);
         private List<InsertDataDto> _messages = [];
         private readonly string _insetTicketQueue = "ticket_queue";
         private int _debugSuccessCount = 0;
@@ -119,7 +119,8 @@ namespace TicketProject.Services.Implement
                         await Task.Delay(_batchInterval);
                     }
 
-                    // 批量更新持久性資料需要取得非同步鎖 多個實例不可同時執行
+                    // 非同步鎖 多個實例不可同時執行
+                    // 因對於TicketContent的依賴是共通的 若同時更新會造成資料不一致
                     var batchInsertLockKey = "TicketService:BatchInsert";
                     var batchInsertLock = false;
                     batchInsertLock = await _retryService.RetryAsync(async () =>

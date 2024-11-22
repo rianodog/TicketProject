@@ -47,7 +47,7 @@ namespace TicketProject.Services.Implement
 
                 // 產生短期和長期的 JWT 令牌
                 var shortToken = tokenHandler.CreateToken(tokenDescriptor);
-                tokenDescriptor.Expires = DateTime.UtcNow.AddDays(7);
+                tokenDescriptor.Expires = DateTime.UtcNow.AddDays(90);
                 var longToken = tokenHandler.CreateToken(tokenDescriptor);
                 return [tokenHandler.WriteToken(shortToken), tokenHandler.WriteToken(longToken)];
             }
